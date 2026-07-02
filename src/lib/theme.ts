@@ -25,3 +25,31 @@ export function applyTheme(t: Theme): void {
   document.documentElement.setAttribute('data-theme', t)
   localStorage.setItem(KEY, t)
 }
+
+// antd 主题 token，数值直接对应 index.css 里 :root[data-theme] 的同名颜色，
+// 让 antd 组件（按钮/卡片/表格等）跟项目自己的紫色系配色统一，而不是用 antd 默认蓝色+纯白。
+export function antdTokens(t: Theme) {
+  return t === 'dark'
+    ? {
+        colorPrimary: '#7c5cff',
+        colorBgContainer: '#1c1c28',
+        colorBgElevated: '#1c1c28',
+        colorBorder: '#2e2e40',
+        colorText: '#e8e8f0',
+        colorTextSecondary: '#9a9ab0',
+        colorError: '#ff5c7a',
+        colorSuccess: '#5ad19a',
+        borderRadius: 12,
+      }
+    : {
+        colorPrimary: '#8270ea',
+        colorBgContainer: '#fbfaff',
+        colorBgElevated: '#fbfaff',
+        colorBorder: '#e8e5f1',
+        colorText: '#353143',
+        colorTextSecondary: '#847f96',
+        colorError: '#d96079',
+        colorSuccess: '#3a9e74',
+        borderRadius: 12,
+      }
+}
