@@ -1,0 +1,75 @@
+<svg viewBox="0 0 680 540" xmlns="http://www.w3.org/2000/svg" role="img">
+<title>二游消费记录 App 架构图</title>
+<desc>浏览器里的 React 单页应用通过 React Router 分成 Dashboard 和 AdminPage 两个页面，都调用同一套数据访问层，再由数据访问层分别请求 Supabase 后端和外部汇率 API。</desc>
+<defs>
+  <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+    <path d="M2 1L8 5L2 9" fill="none" stroke="#94a3b8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+  </marker>
+</defs>
+
+<rect x="0" y="0" width="680" height="540" fill="#ffffff"/>
+
+<!-- arrows -->
+<line x1="340" y1="86" x2="340" y2="126" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arrow)"/>
+<line x1="330" y1="182" x2="205" y2="222" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arrow)"/>
+<line x1="350" y1="182" x2="475" y2="222" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arrow)"/>
+<line x1="205" y1="278" x2="330" y2="318" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arrow)"/>
+<line x1="475" y1="278" x2="350" y2="318" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arrow)"/>
+<line x1="330" y1="374" x2="205" y2="414" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arrow)"/>
+<line x1="350" y1="374" x2="475" y2="414" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+<!-- 浏览器 -->
+<g>
+  <rect x="180" y="30" width="320" height="56" rx="8" fill="#eff6ff" stroke="#93c5fd" stroke-width="0.5"/>
+  <text x="340" y="48" text-anchor="middle" dominant-baseline="central" font-family="sans-serif" font-size="14" font-weight="500" fill="#1e3a8a">浏览器（单页应用）</text>
+  <text x="340" y="68" text-anchor="middle" dominant-baseline="central" font-family="sans-serif" font-size="12" fill="#3b82f6">React 19 + antd v6，Vite 构建</text>
+</g>
+
+<!-- React Router -->
+<g>
+  <rect x="180" y="126" width="320" height="56" rx="8" fill="#eff6ff" stroke="#93c5fd" stroke-width="0.5"/>
+  <text x="340" y="144" text-anchor="middle" dominant-baseline="central" font-family="sans-serif" font-size="14" font-weight="500" fill="#1e3a8a">React Router</text>
+  <text x="340" y="164" text-anchor="middle" dominant-baseline="central" font-family="sans-serif" font-size="12" fill="#3b82f6">/ 和 /admin 两条路由</text>
+</g>
+
+<!-- Dashboard -->
+<g>
+  <rect x="65" y="222" width="260" height="56" rx="8" fill="#eff6ff" stroke="#93c5fd" stroke-width="0.5"/>
+  <text x="195" y="240" text-anchor="middle" dominant-baseline="central" font-family="sans-serif" font-size="14" font-weight="500" fill="#1e3a8a">Dashboard（/）</text>
+  <text x="195" y="260" text-anchor="middle" dominant-baseline="central" font-family="sans-serif" font-size="12" fill="#3b82f6">消费记录增删改查</text>
+</g>
+
+<!-- AdminPage -->
+<g>
+  <rect x="355" y="222" width="260" height="56" rx="8" fill="#eff6ff" stroke="#93c5fd" stroke-width="0.5"/>
+  <text x="485" y="240" text-anchor="middle" dominant-baseline="central" font-family="sans-serif" font-size="14" font-weight="500" fill="#1e3a8a">AdminPage（/admin）</text>
+  <text x="485" y="260" text-anchor="middle" dominant-baseline="central" font-family="sans-serif" font-size="12" fill="#3b82f6">游戏 / 商品管理</text>
+</g>
+
+<!-- lib 数据访问层 -->
+<g>
+  <rect x="180" y="318" width="320" height="56" rx="8" fill="#eff6ff" stroke="#93c5fd" stroke-width="0.5"/>
+  <text x="340" y="336" text-anchor="middle" dominant-baseline="central" font-family="sans-serif" font-size="14" font-weight="500" fill="#1e3a8a">src/lib 数据访问层</text>
+  <text x="340" y="356" text-anchor="middle" dominant-baseline="central" font-family="sans-serif" font-size="12" fill="#3b82f6">封装 Supabase 调用</text>
+</g>
+
+<!-- Supabase -->
+<g>
+  <rect x="65" y="414" width="260" height="56" rx="8" fill="#fffbeb" stroke="#fcd34d" stroke-width="0.5"/>
+  <text x="195" y="432" text-anchor="middle" dominant-baseline="central" font-family="sans-serif" font-size="14" font-weight="500" fill="#78350f">Supabase</text>
+  <text x="195" y="452" text-anchor="middle" dominant-baseline="central" font-family="sans-serif" font-size="12" fill="#b45309">Postgres + Auth + Storage</text>
+</g>
+
+<!-- 汇率 API -->
+<g>
+  <rect x="355" y="414" width="260" height="56" rx="8" fill="#fffbeb" stroke="#fcd34d" stroke-width="0.5"/>
+  <text x="485" y="432" text-anchor="middle" dominant-baseline="central" font-family="sans-serif" font-size="14" font-weight="500" fill="#78350f">汇率 API</text>
+  <text x="485" y="452" text-anchor="middle" dominant-baseline="central" font-family="sans-serif" font-size="12" fill="#b45309">currency-api（外部）</text>
+</g>
+
+<!-- legend -->
+<rect x="180" y="500" width="14" height="14" rx="3" fill="#eff6ff" stroke="#93c5fd" stroke-width="0.5"/>
+<text x="200" y="507" dominant-baseline="central" font-family="sans-serif" font-size="12" fill="#334155">浏览器里运行的前端代码</text>
+<rect x="380" y="500" width="14" height="14" rx="3" fill="#fffbeb" stroke="#fcd34d" stroke-width="0.5"/>
+<text x="400" y="507" dominant-baseline="central" font-family="sans-serif" font-size="12" fill="#334155">外部后端 / 三方服务</text>
+</svg>
