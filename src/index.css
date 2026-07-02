@@ -78,6 +78,17 @@ body {
   line-height: 1.5;
 }
 
+/* 亮色模式自定义背景图（在 admin 里上传）：只在亮色模式生效，
+   两侧空白区域直接露出原图，只在内容区域（.container）加一层
+   半透明白色遮罩保证卡片文字可读，不整页遮罩。 */
+html.has-custom-bg[data-theme='light'] body {
+  background: var(--custom-bg) 50% var(--custom-bg-position, 50%) / cover fixed no-repeat;
+}
+html.has-custom-bg[data-theme='light'] .container {
+  background: rgba(255, 255, 255, 0.72);
+  border-radius: 20px;
+}
+
 h1,
 h2,
 h3 {

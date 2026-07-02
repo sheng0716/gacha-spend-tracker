@@ -3,14 +3,16 @@ import { Spin } from 'antd'
 import { Navigate, Route, Routes } from 'react-router-dom'
 import type { Session } from '@supabase/supabase-js'
 import { supabase, isSupabaseConfigured } from './lib/supabase'
-import type { Game, Product, Purchase, PurchaseInput } from './types'
+import type { Game, Product, Purchase, PurchaseInput, Settings } from './types'
 import { listPurchases } from './lib/purchases'
 import { listGames } from './lib/games'
 import { listProducts } from './lib/products'
+import { getSettings } from './lib/settings'
 import { DEMO_PURCHASES } from './lib/demoData'
 import { uuid } from './lib/id'
 import { DEMO } from './lib/demoMode'
 import Auth from './components/Auth'
+import CustomBackground from './components/CustomBackground'
 import Dashboard from './pages/Dashboard'
 import AdminPage from './pages/AdminPage'
 
@@ -21,6 +23,7 @@ export default function App() {
   const [purchases, setPurchases] = useState<Purchase[]>([])
   const [games, setGames] = useState<Game[]>([])
   const [products, setProducts] = useState<Product[]>([])
+  const [settings, setSettings] = useState<Settings | null>(null)
   const [loading, setLoading] = useState(false)
   const [loadError, setLoadError] = useState<string | null>(null)
 
@@ -48,10 +51,16 @@ export default function App() {
     setLoading(true)
     setLoadError(null)
     try {
-      const [p, g, pr] = await Promise.all([listPurchases(), listGames(), listProducts()])
+      const [p, g, pr, s] = await Promise.all([
+        listPurchases(),
+        listGames(),
+        listProducts(),
+        getSettings(),
+      ])
       setPurchases(p)
       setGames(g)
       setProducts(pr)
+      setSettings(s)
     } catch (e) {
       setLoadError(e instanceof Error ? e.message : String(e))
     } finally {
@@ -63,6 +72,10 @@ export default function App() {
     const [g, pr] = await Promise.all([listGames(), listProducts()])
     setGames(g)
     setProducts(pr)
+  }, [])
+
+  const refreshSettings = useCallback(async () => {
+    setSettings(await getSettings())
   }, [])
 
   useEffect(() => {
@@ -99,38 +112,46 @@ export default function App() {
   if (!session && !DEMO) return <Auth />
 
   return (
-    <Routes>
-      <Route
-        path="/"
-        element={
-          <Dashboard
-            session={session}
-            purchases={purchases}
-            games={games}
-            products={products}
-            loading={loading}
-            loadError={loadError}
-            refresh={refresh}
-            demoSave={demoSave}
-            demoDelete={demoDelete}
-          />
-        }
+    <>
+      <CustomBackground
+        lightBgUrl={settings?.light_bg_url ?? null}
+        lightBgPosition={settings?.light_bg_position ?? 50}
       />
-      {!DEMO && (
+      <Routes>
         <Route
-          path="/admin"
+          path="/"
           element={
-            <AdminPage
-              userId={session?.user.id ?? ''}
+            <Dashboard
+              session={session}
+              purchases={purchases}
               games={games}
               products={products}
-              purchases={purchases}
-              onChanged={refreshGamesAndProducts}
+              loading={loading}
+              loadError={loadError}
+              refresh={refresh}
+              demoSave={demoSave}
+              demoDelete={demoDelete}
             />
           }
         />
-      )}
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+        {!DEMO && (
+          <Route
+            path="/admin"
+            element={
+              <AdminPage
+                userId={session?.user.id ?? ''}
+                games={games}
+                products={products}
+                purchases={purchases}
+                settings={settings}
+                onChanged={refreshGamesAndProducts}
+                onSettingsChanged={refreshSettings}
+              />
+            }
+          />
+        )}
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </>
   )
 }

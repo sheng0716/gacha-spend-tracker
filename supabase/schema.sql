@@ -115,6 +115,35 @@ create policy "own_delete" on public.products
   for delete using (auth.uid() = user_id);
 
 -- ============================================================
+-- 用户设置（目前只有亮色模式自定义背景图）
+-- ============================================================
+
+create table if not exists public.settings (
+  user_id           uuid primary key references auth.users (id) on delete cascade default auth.uid(),
+  light_bg_url      text,
+  light_bg_position integer not null default 50, -- 背景图垂直位置，0=顶部对齐，100=底部对齐
+  updated_at        timestamptz not null default now()
+);
+
+-- 如果 settings 表已经存在（比如之前跑过没有这一列的版本），补上新列
+alter table public.settings
+  add column if not exists light_bg_position integer not null default 50;
+
+alter table public.settings enable row level security;
+
+drop policy if exists "own_select" on public.settings;
+create policy "own_select" on public.settings
+  for select using (auth.uid() = user_id);
+
+drop policy if exists "own_insert" on public.settings;
+create policy "own_insert" on public.settings
+  for insert with check (auth.uid() = user_id);
+
+drop policy if exists "own_update" on public.settings;
+create policy "own_update" on public.settings
+  for update using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+-- ============================================================
 -- Storage: game-logos bucket
 -- 先在 Supabase 控制台 → Storage 里手动创建一个名为 game-logos 的
 -- bucket（Public bucket 开启），然后运行下面的 RLS。
@@ -143,5 +172,37 @@ drop policy if exists "game_logos_delete_own" on storage.objects;
 create policy "game_logos_delete_own" on storage.objects
   for delete using (
     bucket_id = 'game-logos'
+    and (storage.foldername(name))[1] = auth.uid()::text
+  );
+
+-- ============================================================
+-- Storage: backgrounds bucket（亮色模式自定义背景图）
+-- 先在 Supabase 控制台 → Storage 里手动创建一个名为 backgrounds 的
+-- bucket（Public bucket 开启），然后运行下面的 RLS。
+-- 上传路径约定：{user_id}/{文件名}
+-- ============================================================
+
+drop policy if exists "backgrounds_read" on storage.objects;
+create policy "backgrounds_read" on storage.objects
+  for select using (bucket_id = 'backgrounds');
+
+drop policy if exists "backgrounds_insert_own" on storage.objects;
+create policy "backgrounds_insert_own" on storage.objects
+  for insert with check (
+    bucket_id = 'backgrounds'
+    and (storage.foldername(name))[1] = auth.uid()::text
+  );
+
+drop policy if exists "backgrounds_update_own" on storage.objects;
+create policy "backgrounds_update_own" on storage.objects
+  for update using (
+    bucket_id = 'backgrounds'
+    and (storage.foldername(name))[1] = auth.uid()::text
+  );
+
+drop policy if exists "backgrounds_delete_own" on storage.objects;
+create policy "backgrounds_delete_own" on storage.objects
+  for delete using (
+    bucket_id = 'backgrounds'
     and (storage.foldername(name))[1] = auth.uid()::text
   );

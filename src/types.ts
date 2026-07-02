@@ -61,3 +61,11 @@ export interface ProductInput {
   currency: string
   price: number
 }
+
+// 用户设置：目前只有亮色模式自定义背景图
+export interface Settings {
+  user_id: string
+  light_bg_url: string | null
+  light_bg_position: number // 0-100，背景图垂直位置，50=居中
+  updated_at: string
+}
