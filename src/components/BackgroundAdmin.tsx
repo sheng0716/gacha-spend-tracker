@@ -1,7 +1,14 @@
-import { useEffect, useState } from 'react'
-import { App as AntdApp, Button, Card, Slider, Upload } from 'antd'
+import { useCallback, useEffect, useState } from 'react'
+import { App as AntdApp, Button, Card, Image, Popconfirm, Slider, Space, Upload } from 'antd'
 import { PlusOutlined } from '@ant-design/icons'
-import { setBackgroundPosition, setLightBackground, uploadBackground } from '../lib/settings'
+import {
+  type BackgroundHistoryItem,
+  deleteBackgroundFile,
+  listBackgroundHistory,
+  setBackgroundPosition,
+  setLightBackground,
+  uploadBackground,
+} from '../lib/settings'
 
 interface Props {
   userId: string
@@ -15,10 +22,24 @@ export default function BackgroundAdmin({ userId, lightBgUrl, lightBgPosition, o
   const [uploading, setUploading] = useState(false)
   // 拖动滑块时先只改本地预览，松手才写数据库，避免拖动过程里疯狂请求
   const [previewPosition, setPreviewPosition] = useState(lightBgPosition)
+  const [history, setHistory] = useState<BackgroundHistoryItem[]>([])
+  const [busyPath, setBusyPath] = useState<string | null>(null)
 
   useEffect(() => {
     setPreviewPosition(lightBgPosition)
   }, [lightBgPosition])
+
+  const refreshHistory = useCallback(async () => {
+    try {
+      setHistory(await listBackgroundHistory(userId))
+    } catch (e) {
+      message.error(e instanceof Error ? e.message : String(e))
+    }
+  }, [userId, message])
+
+  useEffect(() => {
+    refreshHistory()
+  }, [refreshHistory])
 
   async function handleUpload(file: File) {
     setUploading(true)
@@ -27,6 +48,7 @@ export default function BackgroundAdmin({ userId, lightBgUrl, lightBgPosition, o
       await setLightBackground(userId, url)
       message.success('背景已更新')
       onChanged()
+      await refreshHistory()
     } catch (e) {
       message.error(e instanceof Error ? e.message : String(e))
     } finally {
@@ -51,6 +73,37 @@ export default function BackgroundAdmin({ userId, lightBgUrl, lightBgPosition, o
       onChanged()
     } catch (e) {
       message.error(e instanceof Error ? e.message : String(e))
+    }
+  }
+
+  async function handleRestore(item: BackgroundHistoryItem) {
+    setBusyPath(item.path)
+    try {
+      await setLightBackground(userId, item.url)
+      message.success('已切换回这张背景')
+      onChanged()
+    } catch (e) {
+      message.error(e instanceof Error ? e.message : String(e))
+    } finally {
+      setBusyPath(null)
+    }
+  }
+
+  async function handleDeleteHistory(item: BackgroundHistoryItem) {
+    setBusyPath(item.path)
+    try {
+      await deleteBackgroundFile(item.path)
+      // 删的正好是当前在用的那张，恢复默认背景，避免指向一个已经不存在的文件
+      if (item.url === lightBgUrl) {
+        await setLightBackground(userId, null)
+        onChanged()
+      }
+      message.success('已删除')
+      await refreshHistory()
+    } catch (e) {
+      message.error(e instanceof Error ? e.message : String(e))
+    } finally {
+      setBusyPath(null)
     }
   }
 
@@ -102,6 +155,63 @@ export default function BackgroundAdmin({ userId, lightBgUrl, lightBgPosition, o
           <Button danger onClick={handleRemove}>
             恢复默认背景
           </Button>
+        </>
+      )}
+
+      {history.length > 0 && (
+        <>
+          <div className="muted small" style={{ margin: '20px 0 8px' }}>
+            历史背景（{history.length} 张，包含已替换掉的，可以切换回去或者彻底删除）
+          </div>
+          <Image.PreviewGroup>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12 }}>
+              {history.map((item) => {
+                const isCurrent = item.url === lightBgUrl
+                const busy = busyPath === item.path
+                return (
+                  <div
+                    key={item.path}
+                    style={{
+                      width: 120,
+                      borderRadius: 8,
+                      overflow: 'hidden',
+                      border: isCurrent ? '2px solid var(--ant-color-primary, #722ed1)' : '1px solid var(--ant-color-border, #d9d9d9)',
+                    }}
+                  >
+                    <Image
+                      src={item.url}
+                      width={120}
+                      height={80}
+                      style={{ objectFit: 'cover' }}
+                      alt="历史背景"
+                    />
+                    <div style={{ padding: 6 }}>
+                    {isCurrent ? (
+                      <div className="muted small" style={{ textAlign: 'center' }}>
+                        使用中
+                      </div>
+                    ) : (
+                      <Space direction="vertical" size={4} style={{ width: '100%' }}>
+                        <Button size="small" block loading={busy} onClick={() => handleRestore(item)}>
+                          设为当前
+                        </Button>
+                        <Popconfirm
+                          title="删除这张历史背景？"
+                          description="删除后无法恢复"
+                          onConfirm={() => handleDeleteHistory(item)}
+                        >
+                          <Button size="small" danger block loading={busy}>
+                            删除
+                          </Button>
+                        </Popconfirm>
+                      </Space>
+                    )}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </Image.PreviewGroup>
         </>
       )}
     </Card>
