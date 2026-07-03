@@ -1,5 +1,6 @@
-import { Layout, Button, Space } from 'antd'
-import { ArrowLeftOutlined } from '@ant-design/icons'
+import { useState } from 'react'
+import { Layout, Button, Modal, Space } from 'antd'
+import { ArrowLeftOutlined, PictureOutlined } from '@ant-design/icons'
 import { useNavigate } from 'react-router-dom'
 import type { Game, Product, Purchase, Settings } from '../types'
 import BackgroundAdmin from '../components/BackgroundAdmin'
@@ -26,6 +27,7 @@ export default function AdminPage({
   onSettingsChanged,
 }: Props) {
   const navigate = useNavigate()
+  const [showBackground, setShowBackground] = useState(false)
 
   return (
     <Layout style={{ minHeight: '100vh', background: 'transparent' }}>
@@ -35,18 +37,15 @@ export default function AdminPage({
           游戏管理
         </Space>
         <Space size={8} align="center">
+          <Button icon={<PictureOutlined />} onClick={() => setShowBackground(true)}>
+            背景设置
+          </Button>
           <ThemeToggle />
         </Space>
       </Layout.Header>
 
       <Layout.Content>
         <div className="container">
-          <BackgroundAdmin
-            userId={userId}
-            lightBgUrl={settings?.light_bg_url ?? null}
-            lightBgPosition={settings?.light_bg_position ?? 50}
-            onChanged={onSettingsChanged}
-          />
           <GameAdmin
             userId={userId}
             games={games}
@@ -56,6 +55,22 @@ export default function AdminPage({
           />
         </div>
       </Layout.Content>
+
+      <Modal
+        title="亮色模式背景"
+        open={showBackground}
+        onCancel={() => setShowBackground(false)}
+        footer={null}
+        destroyOnHidden
+        width={720}
+      >
+        <BackgroundAdmin
+          userId={userId}
+          lightBgUrl={settings?.light_bg_url ?? null}
+          lightBgPosition={settings?.light_bg_position ?? 50}
+          onChanged={onSettingsChanged}
+        />
+      </Modal>
     </Layout>
   )
 }

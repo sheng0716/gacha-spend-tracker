@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { App as AntdApp, Button, Card, Image, Popconfirm, Slider, Space, Upload } from 'antd'
+import { App as AntdApp, Button, Image, Popconfirm, Slider, Space, Upload } from 'antd'
 import { PlusOutlined } from '@ant-design/icons'
 import {
   type BackgroundHistoryItem,
@@ -112,7 +112,7 @@ export default function BackgroundAdmin({ userId, lightBgUrl, lightBgPosition, o
   }
 
   return (
-    <Card title="亮色模式背景" style={{ marginBottom: 16 }}>
+    <div>
       <div className="muted small" style={{ marginBottom: 12 }}>
         上传一张喜欢的图片，切换到亮色模式时会显示为背景。
         <br />
@@ -219,6 +219,6 @@ export default function BackgroundAdmin({ userId, lightBgUrl, lightBgPosition, o
           </Image.PreviewGroup>
         </>
       )}
-    </Card>
+    </div>
   )
 }
