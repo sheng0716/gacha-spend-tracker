@@ -114,21 +114,23 @@ export default function GameAdmin({ userId, games, products, purchases, onChange
 
   return (
     <div>
-      <Space style={{ marginBottom: 16 }}>
-        <Button onClick={runImport} loading={importing}>
-          从历史记录导入
-        </Button>
-        <Button type="primary" onClick={openNew}>＋ 新增游戏</Button>
-      </Space>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, marginBottom: 16 }}>
+        <Space>
+          <Button onClick={runImport} loading={importing}>
+            从历史记录导入
+          </Button>
+          <Button type="primary" onClick={openNew}>＋ 新增游戏</Button>
+        </Space>
 
-      <Input
-        allowClear
-        prefix={<SearchOutlined />}
-        placeholder="搜索游戏"
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        style={{ marginBottom: 16, maxWidth: 320 }}
-      />
+        <Input
+          allowClear
+          prefix={<SearchOutlined />}
+          placeholder="搜索游戏"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          style={{ maxWidth: 320 }}
+        />
+      </div>
 
       <Modal
         title={editing ? '编辑游戏' : '新增游戏'}
