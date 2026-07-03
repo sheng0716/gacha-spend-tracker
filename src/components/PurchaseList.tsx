@@ -143,7 +143,15 @@ export default function PurchaseList({ purchases, games, onEdit, onDelete }: Pro
           onChange={(v) => setGameFilter(v ?? '')}
           allowClear
           placeholder="全部游戏"
-          options={gameNames.map((g) => ({ value: g, label: g }))}
+          options={gameNames.map((g) => ({
+            value: g,
+            label: (
+              <Space size={6}>
+                <GameAvatar game={g} logoUrl={logoByGame.get(g)} size={18} />
+                {g}
+              </Space>
+            ),
+          }))}
         />
         <Select
           style={{ minWidth: 120 }}
