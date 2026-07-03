@@ -139,8 +139,15 @@ export default function GameAdmin({ userId, games, products, purchases, onChange
             <Upload
               listType="picture-card"
               maxCount={1}
+              accept="image/*"
               fileList={fileList}
-              beforeUpload={() => false}
+              beforeUpload={(file) => {
+                if (!file.type.startsWith('image/')) {
+                  message.error('只能上传图片文件')
+                  return Upload.LIST_IGNORE
+                }
+                return false
+              }}
               onChange={({ fileList: fl }) => setFileList(fl)}
             >
               {fileList.length === 0 && (

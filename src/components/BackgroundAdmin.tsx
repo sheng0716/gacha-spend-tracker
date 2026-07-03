@@ -42,6 +42,10 @@ export default function BackgroundAdmin({ userId, lightBgUrl, lightBgPosition, o
   }, [refreshHistory])
 
   async function handleUpload(file: File) {
+    if (!file.type.startsWith('image/')) {
+      message.error('只能上传图片文件')
+      return Upload.LIST_IGNORE
+    }
     setUploading(true)
     try {
       const url = await uploadBackground(userId, file)
@@ -118,6 +122,7 @@ export default function BackgroundAdmin({ userId, lightBgUrl, lightBgPosition, o
         listType="picture-card"
         showUploadList={false}
         disabled={uploading}
+        accept="image/*"
         beforeUpload={handleUpload}
       >
         {lightBgUrl ? (
