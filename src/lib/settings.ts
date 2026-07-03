@@ -38,3 +38,28 @@ export async function uploadBackground(userId: string, file: File): Promise<stri
   const { data } = supabase.storage.from('backgrounds').getPublicUrl(path)
   return data.publicUrl
 }
+
+export interface BackgroundHistoryItem {
+  path: string
+  url: string
+}
+
+// 列出该用户在 Storage 里所有曾上传过的背景图（含已被替换掉、当前没在用的）
+export async function listBackgroundHistory(userId: string): Promise<BackgroundHistoryItem[]> {
+  const { data, error } = await supabase.storage
+    .from('backgrounds')
+    .list(userId, { sortBy: { column: 'created_at', order: 'desc' } })
+  if (error) throw error
+  return (data ?? [])
+    .filter((f) => f.name) // 过滤掉文件夹占位对象
+    .map((f) => {
+      const path = `${userId}/${f.name}`
+      return { path, url: supabase.storage.from('backgrounds').getPublicUrl(path).data.publicUrl }
+    })
+}
+
+// 从 Storage 里彻底删除某张历史背景图
+export async function deleteBackgroundFile(path: string): Promise<void> {
+  const { error } = await supabase.storage.from('backgrounds').remove([path])
+  if (error) throw error
+}
