@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Alert, AutoComplete, Button, DatePicker, Form, Input, InputNumber, Select, Tag } from 'antd'
+import { Alert, AutoComplete, Button, DatePicker, Form, Input, InputNumber, Select, Space, Tag } from 'antd'
 import dayjs from 'dayjs'
 import type { Game, Product, Purchase, PurchaseInput, RateSource } from '../types'
 import { CURRENCIES, BASE_CURRENCY, formatMYR } from '../lib/currency'
@@ -180,7 +180,15 @@ export default function PurchaseForm({
                 setGame(v)
               }}
               placeholder="如 Star Savior"
-              options={games.map((g) => ({ value: g.name }))}
+              options={games.map((g) => ({
+                value: g.name,
+                label: (
+                  <Space size={6}>
+                    <GameAvatar game={g.name} logoUrl={g.logo_url} size={18} />
+                    {g.name}
+                  </Space>
+                ),
+              }))}
               filterOption={(input, option) =>
                 (option?.value ?? '').toLowerCase().includes(input.toLowerCase())
               }
