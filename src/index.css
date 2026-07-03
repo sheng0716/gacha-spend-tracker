@@ -396,9 +396,15 @@ select:not([class*='ant-']):focus {
 }
 
 /* ---------- 弹窗 ---------- */
-/* 允许弹窗打开时仍能滚动背景：抵消 antd 注入的 body 滚动锁（html body{overflow-y:hidden}） */
+/* 允许弹窗打开时仍能滚动背景：抵消 antd 弹窗打开时注入的 <style> 规则
+   （rc-util 会插入 `html body { overflow-y: hidden; width: calc(100% - 15px); }`
+   来锁住背景滚动，并把 body 宽度缩小 15px 补偿"滚动条消失"）。
+   我们不想锁背景，所以把 overflow-y 改回来了；但 width 那条没抵消的话，
+   滚动条其实一直都在，body 却仍然被强行缩窄 15px，就导致弹窗一开页面内容整体往左挪的错觉。 */
 html body {
   overflow-y: auto !important;
+  padding-right: 0 !important;
+  width: 100% !important;
 }
 
 .modal-overlay {
