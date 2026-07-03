@@ -139,17 +139,8 @@ export default function ProductAdmin({ gameId, products, onChanged }: Props) {
 
   return (
     <div>
-      <Table
-        rowKey="id"
-        size="small"
-        columns={columns}
-        dataSource={gameProducts}
-        pagination={false}
-        locale={{ emptyText: '暂无商品' }}
-      />
-
       {showForm ? (
-        <Form layout="vertical" style={{ marginTop: 12 }} onFinish={submit}>
+        <Form layout="vertical" style={{ marginBottom: 12 }} onFinish={submit}>
           <div className="grid2">
             <Form.Item label="商品名称" required>
               <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="如小月卡" />
@@ -183,10 +174,19 @@ export default function ProductAdmin({ gameId, products, onChanged }: Props) {
           </div>
         </Form>
       ) : (
-        <Button type="link" onClick={openNew} style={{ paddingLeft: 0 }}>
+        <Button type="link" onClick={openNew} style={{ paddingLeft: 0, marginBottom: 8 }}>
           ＋ 新增商品
         </Button>
       )}
+
+      <Table
+        rowKey="id"
+        size="small"
+        columns={columns}
+        dataSource={gameProducts}
+        pagination={false}
+        locale={{ emptyText: '暂无商品' }}
+      />
     </div>
   )
 }
