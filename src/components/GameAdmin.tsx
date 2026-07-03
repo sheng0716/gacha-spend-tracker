@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { App as AntdApp, Button, Collapse, Form, Input, Modal, Space, Upload } from 'antd'
+import { App as AntdApp, Button, Form, Input, Modal, Space, Upload } from 'antd'
 import { SearchOutlined } from '@ant-design/icons'
 import type { UploadFile } from 'antd'
 import { DeleteOutlined, EditOutlined, PlusOutlined } from '@ant-design/icons'
@@ -26,12 +26,18 @@ export default function GameAdmin({ userId, games, products, purchases, onChange
   const [saving, setSaving] = useState(false)
   const [importing, setImporting] = useState(false)
   const [search, setSearch] = useState('')
+  const [managingGameId, setManagingGameId] = useState<string | null>(null)
 
   const filteredGames = useMemo(() => {
     const q = search.trim().toLowerCase()
     if (!q) return games
     return games.filter((g) => g.name.toLowerCase().includes(q))
   }, [games, search])
+
+  const managingGame = useMemo(
+    () => (managingGameId ? games.find((g) => g.id === managingGameId) ?? null : null),
+    [games, managingGameId],
+  )
 
   function openNew() {
     setEditing(null)
@@ -166,38 +172,45 @@ export default function GameAdmin({ userId, games, products, purchases, onChange
         </Form>
       </Modal>
 
-      <Collapse
-        items={filteredGames.map((g) => ({
-          key: g.id,
-          label: (
-            <span className="input-with-avatar">
-              <GameAvatar game={g.name} logoUrl={g.logo_url} size={26} />
-              {g.name}
-            </span>
-          ),
-          extra: (
-            <span onClick={(e) => e.stopPropagation()}>
-              <Button
-                type="text"
-                size="small"
-                title="编辑"
-                icon={<EditOutlined />}
-                onClick={() => openEdit(g)}
-              />
-              <Button
-                type="text"
-                size="small"
-                title="删除"
-                danger
-                icon={<DeleteOutlined />}
-                onClick={() => onDelete(g)}
-              />
-            </span>
-          ),
-          children: <ProductAdmin gameId={g.id} products={products} onChanged={onChanged} />,
-        }))}
-      />
+      <div className="game-grid">
+        {filteredGames.map((g) => (
+          <div key={g.id} className="game-tile" onClick={() => setManagingGameId(g.id)}>
+            <GameAvatar game={g.name} logoUrl={g.logo_url} size={56} />
+            <span className="game-tile-name">{g.name}</span>
+          </div>
+        ))}
+      </div>
       {filteredGames.length === 0 && <div className="muted small">没有匹配的游戏。</div>}
+
+      <Modal
+        title={
+          managingGame ? (
+            <span className="input-with-avatar">
+              <GameAvatar game={managingGame.name} logoUrl={managingGame.logo_url} size={26} />
+              {managingGame.name}
+            </span>
+          ) : null
+        }
+        open={!!managingGame}
+        onCancel={() => setManagingGameId(null)}
+        footer={null}
+        destroyOnHidden
+        width={720}
+      >
+        {managingGame && (
+          <>
+            <Space style={{ marginBottom: 16 }}>
+              <Button icon={<EditOutlined />} onClick={() => openEdit(managingGame)}>
+                编辑游戏
+              </Button>
+              <Button danger icon={<DeleteOutlined />} onClick={() => onDelete(managingGame)}>
+                删除游戏
+              </Button>
+            </Space>
+            <ProductAdmin gameId={managingGame.id} products={products} onChanged={onChanged} />
+          </>
+        )}
+      </Modal>
     </div>
   )
 }
