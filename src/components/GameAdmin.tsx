@@ -99,7 +99,7 @@ export default function GameAdmin({ userId, games, products, purchases, onChange
     })
   }
 
-  async function runImport() {
+  async function doImport() {
     setImporting(true)
     try {
       const { gamesCreated, productsCreated } = await importGamesAndProductsFromPurchases(purchases)
@@ -110,6 +110,17 @@ export default function GameAdmin({ userId, games, products, purchases, onChange
     } finally {
       setImporting(false)
     }
+  }
+
+  function runImport() {
+    modal.confirm({
+      title: '从历史记录导入？',
+      content: '会根据消费记录里出现过的游戏和商品名称，自动新增缺失的游戏与商品。',
+      okText: '导入',
+      cancelText: '取消',
+      maskClosable: true,
+      onOk: doImport,
+    })
   }
 
   return (
