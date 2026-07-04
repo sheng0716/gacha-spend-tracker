@@ -237,7 +237,7 @@ export default function Summary({ purchases, games }: Props) {
         <Row gutter={[16, 16]} style={{ marginTop: 16 }}>
           <Col span={24}>
             <Card title="按月花费 (MYR)">
-              <ResponsiveContainer width="100%" height={220}>
+              <ResponsiveContainer width="100%" height={300}>
                 <BarChart data={byMonth} margin={{ top: 8, right: 8, left: -12, bottom: 0 }}>
                   <XAxis dataKey="month" tick={{ fontSize: 11, fill: 'var(--muted)' }} />
                   <YAxis tick={{ fontSize: 11, fill: 'var(--muted)' }} />
@@ -268,7 +268,7 @@ export default function Summary({ purchases, games }: Props) {
 
           <Col span={24}>
             <Card title="各游戏占比 (MYR)">
-              <ResponsiveContainer width="100%" height={220}>
+              <ResponsiveContainer width="100%" height={300}>
                 <PieChart>
                   <Pie
                     data={byGame}
@@ -276,7 +276,7 @@ export default function Summary({ purchases, games }: Props) {
                     nameKey="name"
                     cx="50%"
                     cy="50%"
-                    outerRadius={65}
+                    outerRadius="75%"
                     label={renderPieAvatarLabel(logoByGame)}
                     labelLine={{ stroke: 'var(--border)' }}
                   >

@@ -8,23 +8,9 @@
   --text: #e8e8f0;
   --muted: #9a9ab0;
   --primary: #7c5cff;
-  --primary-d: #6a49f0;
-  --danger: #ff5c7a;
-  --ok: #5ad19a;
   --btn-bg: #2a2a3a;
   --input-bg: #16161f;
-  --tab-bg: #20202c;
   --topbar-bg: #161620ee;
-  --err-bg: #3a1f2a;
-  --err-fg: #ff9db1;
-  --err-bd: #5a2a3a;
-  --ok-bg: #1f3a2e;
-  --ok-fg: #9be8c4;
-  --ok-bd: #2a5a44;
-  --auto-bg: #25324a;
-  --auto-fg: #7fb6ff;
-  --manual-bg: #4a3a25;
-  --manual-fg: #ffc97f;
   --radius: 12px;
   color-scheme: dark;
 }
@@ -38,23 +24,9 @@
   --text: #353143;
   --muted: #847f96;
   --primary: #8270ea;
-  --primary-d: #6f5be0;
-  --danger: #d96079;
-  --ok: #3a9e74;
   --btn-bg: #f0eef7;
   --input-bg: #fbfaff;
-  --tab-bg: #efedf6;
   --topbar-bg: #f6f4fcee;
-  --err-bg: #fceef1;
-  --err-fg: #b5566a;
-  --err-bd: #f1d3da;
-  --ok-bg: #e9f6ef;
-  --ok-fg: #3d8a64;
-  --ok-bd: #cfe9da;
-  --auto-bg: #e4ebfa;
-  --auto-fg: #5572b0;
-  --manual-bg: #f7eede;
-  --manual-fg: #a07b3f;
   color-scheme: light;
 }
 
@@ -115,23 +87,8 @@ h3 {
   place-items: center;
   min-height: 100vh;
 }
-.nowrap {
-  white-space: nowrap;
-}
-.num {
-  text-align: right;
-}
 
-/* ---------- 卡片 ---------- */
-.card {
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 16px;
-  margin-bottom: 16px;
-}
-
-/* ---------- 按钮 ---------- */
+/* ---------- 按钮（仅 ThemeToggle 的图标按钮还在用原生 button）---------- */
 .btn {
   appearance: none;
   border: 1px solid var(--border);
@@ -149,29 +106,6 @@ h3 {
 .btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
-}
-.btn.primary {
-  background: var(--primary);
-  border-color: var(--primary);
-  color: #fff;
-}
-.btn.primary:hover:not(:disabled) {
-  background: var(--primary-d);
-}
-.btn.danger {
-  background: var(--danger);
-  border-color: var(--danger);
-  color: #fff;
-}
-.btn.danger:hover:not(:disabled) {
-  filter: brightness(1.08);
-}
-.btn.link {
-  background: none;
-  border: none;
-  color: var(--primary);
-  padding: 4px 0;
-  text-align: left;
 }
 .btn.icon {
   background: none;
@@ -211,22 +145,12 @@ select:not([class*='ant-']):focus {
   gap: 14px;
 }
 
-/* ---------- 提示 ---------- */
-.alert {
-  border-radius: 9px;
-  padding: 9px 12px;
-  margin: 8px 0;
-  font-size: 0.86rem;
-}
-.alert.error {
-  background: var(--err-bg);
-  color: var(--err-fg);
-  border: 1px solid var(--err-bd);
-}
-.alert.ok {
-  background: var(--ok-bg);
-  color: var(--ok-fg);
-  border: 1px solid var(--ok-bd);
+/* 点击图表的柱子/扇形/图例时，浏览器会给 SVG 元素画一圈黑色焦点框，去掉它 */
+.recharts-wrapper :focus,
+.recharts-wrapper :focus-visible,
+.recharts-surface,
+.recharts-surface :focus {
+  outline: none;
 }
 
 /* ---------- 登录页 ---------- */
@@ -253,25 +177,6 @@ select:not([class*='ant-']):focus {
 .brand {
   font-weight: 700;
 }
-.tabs {
-  display: flex;
-  gap: 6px;
-  margin: 14px 0;
-}
-.tab {
-  flex: 1;
-  background: var(--tab-bg);
-  border: 1px solid var(--border);
-  color: var(--muted);
-  padding: 8px;
-  border-radius: 9px;
-  cursor: pointer;
-}
-.tab.active {
-  background: var(--primary);
-  color: white;
-  border-color: var(--primary);
-}
 
 /* ---------- 顶栏 ---------- */
 .topbar {
@@ -290,11 +195,6 @@ select:not([class*='ant-']):focus {
 .topbar .brand {
   font-size: 1.05rem;
 }
-.topbar-right {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
 
 .container {
   max-width: 1440px;
@@ -306,43 +206,6 @@ select:not([class*='ant-']):focus {
   align-items: center;
   gap: 12px;
   margin-bottom: 12px;
-}
-.footer {
-  max-width: 980px;
-  margin: 0 auto;
-  padding: 8px 18px 32px;
-}
-
-/* ---------- 汇总 ---------- */
-.stats {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
-  margin-bottom: 16px;
-}
-.stat {
-  margin: 0;
-  text-align: center;
-}
-.stat-label {
-  color: var(--muted);
-  font-size: 0.82rem;
-}
-.stat-value {
-  font-size: 1.5rem;
-  font-weight: 700;
-  margin-top: 4px;
-}
-.charts {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-}
-.chart {
-  margin: 0;
-}
-.chart h3 {
-  font-size: 0.95rem;
 }
 
 /* ---------- 换算框 ---------- */
@@ -366,27 +229,6 @@ select:not([class*='ant-']):focus {
   justify-content: center;
   gap: 4px;
 }
-.badge {
-  font-size: 0.72rem;
-  padding: 2px 8px;
-  border-radius: 20px;
-}
-.badge.auto {
-  background: var(--auto-bg);
-  color: var(--auto-fg);
-}
-.badge.manual {
-  background: var(--manual-bg);
-  color: var(--manual-fg);
-}
-.tag {
-  font-size: 0.68rem;
-  background: var(--manual-bg);
-  color: var(--manual-fg);
-  padding: 1px 6px;
-  border-radius: 10px;
-  margin-left: 6px;
-}
 
 .form-actions {
   display: flex;
@@ -395,7 +237,7 @@ select:not([class*='ant-']):focus {
   margin-top: 6px;
 }
 
-/* ---------- 弹窗 ---------- */
+/* ---------- 弹窗滚动修复 ---------- */
 /* 允许弹窗打开时仍能滚动背景：抵消 antd 弹窗打开时注入的 <style> 规则
    （rc-util 会插入 `html body { overflow-y: hidden; width: calc(100% - 15px); }`
    来锁住背景滚动，并把 body 宽度缩小 15px 补偿"滚动条消失"）。
@@ -407,70 +249,6 @@ html body {
   width: 100% !important;
 }
 
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 50;
-  background: rgba(10, 10, 18, 0.55);
-  backdrop-filter: blur(3px);
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
-  padding: 6vh 16px 24px;
-  overflow-y: auto;
-  animation: overlay-in 0.15s ease;
-}
-.modal {
-  width: 100%;
-  max-width: 560px;
-}
-.modal.modal-sm {
-  max-width: 420px;
-}
-.confirm h2 {
-  margin-bottom: 10px;
-}
-.confirm-msg {
-  color: var(--muted);
-  white-space: pre-line;
-  margin: 0 0 16px;
-}
-.modal .form {
-  margin-bottom: 0;
-  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.35);
-  animation: modal-in 0.18s ease;
-}
-@keyframes overlay-in {
-  from {
-    opacity: 0;
-  }
-}
-@keyframes modal-in {
-  from {
-    opacity: 0;
-    transform: translateY(12px) scale(0.98);
-  }
-}
-
-/* ---------- 列表 ---------- */
-.list-head {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 10px;
-}
-.filters {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin: 10px 0 14px;
-}
-.filters select,
-.filters input {
-  width: auto;
-  min-width: 120px;
-  flex: 0 1 auto;
-}
 /* ---------- 游戏头像 ---------- */
 .game-avatar {
   display: inline-flex;
@@ -487,11 +265,6 @@ html body {
   color: #fff;
   font-weight: 700;
   border: none;
-}
-.game-cell {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
 }
 .input-with-avatar {
   display: flex;
@@ -534,63 +307,11 @@ html body {
   line-height: 1.3;
   word-break: break-word;
 }
-@media (max-width: 640px) {
-  .game-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-.table-wrap {
-  overflow-x: auto;
-}
-/* 这些表格样式仅作用于 .table-wrap 内的自定义表格，避免波及 antd Table */
-.table-wrap table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.9rem;
-}
-.table-wrap th,
-.table-wrap td {
-  padding: 9px 10px;
-  border-bottom: 1px solid var(--border);
-  text-align: left;
-  vertical-align: top;
-}
-.table-wrap th {
-  color: var(--muted);
-  font-weight: 600;
-  font-size: 0.82rem;
-}
-.table-wrap th.sortable {
-  cursor: pointer;
-  user-select: none;
-}
-.table-wrap th.sortable:hover {
-  color: var(--text);
-}
-.table-wrap td.product {
-  max-width: 260px;
-}
-.table-wrap td.actions {
-  white-space: nowrap;
-  text-align: right;
-}
-.empty {
-  text-align: center;
-  color: var(--muted);
-  padding: 28px;
-}
 
 /* ---------- 移动端 ---------- */
 @media (max-width: 640px) {
-  .charts {
-    grid-template-columns: 1fr;
-  }
-  .stats {
-    grid-template-columns: 1fr 1fr;
-  }
-  .stat:nth-child(3) {
-    grid-column: 1 / -1;
+  .game-grid {
+    grid-template-columns: repeat(2, 1fr);
   }
   .grid2 {
     grid-template-columns: 1fr;
@@ -600,8 +321,5 @@ html body {
   }
   .container {
     padding: 12px;
-  }
-  .table-wrap td.product {
-    max-width: 140px;
   }
 }
