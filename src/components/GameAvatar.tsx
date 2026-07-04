@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { gameIcon, gameColor, gameInitial } from '../lib/games'
+import { resolveGameLogo, gameColor, gameInitial } from '../lib/games'
 
 interface Props {
   game: string
@@ -9,7 +9,7 @@ interface Props {
 }
 
 export default function GameAvatar({ game, size = 28, logoUrl }: Props) {
-  const src = logoUrl ?? gameIcon(game)
+  const src = resolveGameLogo(logoUrl, game)
   const [failed, setFailed] = useState(false)
   const style = { width: size, height: size, minWidth: size, fontSize: size * 0.42 }
 

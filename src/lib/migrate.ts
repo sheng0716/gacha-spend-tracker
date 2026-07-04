@@ -1,5 +1,5 @@
 import type { Purchase } from '../types'
-import { GAME_ICONS, createGame, listGames } from './games'
+import { createGame, listGames } from './games'
 import { createProduct, listProducts } from './products'
 
 // 一次性把历史消费记录里出现过的游戏/商品导入到管理列表。
@@ -25,7 +25,9 @@ export async function importGamesAndProductsFromPurchases(
   for (const [gameName, gamePurchases] of byGame) {
     let game = gameByName.get(gameName)
     if (!game) {
-      game = await createGame({ name: gameName, logo_url: GAME_ICONS[gameName] ?? null })
+      // 静态图标按游戏名在渲染时解析（resolveGameLogo/gameIcon），不存进 DB，
+      // 免得把依赖部署位置的路径写死进数据；logo_url 只留给 Supabase 上传的自定义 logo。
+      game = await createGame({ name: gameName, logo_url: null })
       gameByName.set(gameName, game)
       gamesCreated++
     }

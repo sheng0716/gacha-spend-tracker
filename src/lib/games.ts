@@ -57,6 +57,17 @@ export function gameIcon(name: string): string | null {
   return GAME_ICONS[name.trim()] ?? null
 }
 
+// 解析要显示的 logo。历史上「从历史记录导入」把静态图标存成了 /games/xxx.webp 这种根绝对路径，
+// 部署到子路径（GitHub Pages）后会 404；这里把这类路径按当前 BASE_URL 重新拼一遍（幂等）。
+// Supabase 上传的自定义 logo 是完整 http(s) 地址，原样返回；没有 logo 就回退到按名字的静态映射。
+export function resolveGameLogo(logoUrl: string | null | undefined, name: string): string | null {
+  if (!logoUrl) return gameIcon(name)
+  if (/^https?:\/\//.test(logoUrl)) return logoUrl
+  const file = logoUrl.match(/games\/([^/]+)$/)?.[1]
+  if (file) return `${import.meta.env.BASE_URL}games/${file}`
+  return logoUrl
+}
+
 // 没有头像的游戏：根据名字算一个稳定的颜色，做首字母圆形头像
 export function gameColor(name: string): string {
   let h = 0
