@@ -10,9 +10,11 @@ import {
 import {
   BarChart,
   Bar,
+  Rectangle,
   XAxis,
   YAxis,
   Tooltip,
+  Legend,
   ResponsiveContainer,
   PieChart,
   Pie,
@@ -89,6 +91,42 @@ function renderPieAvatarLabel(logoByGame: Map<string, string | null>) {
   }
 }
 
+// 堆叠柱状图每段画出本段颜色 + 段中间的百分比文字（占当月总花费的比例），段太窄（<8%）就不画字，免得文字挤成一团。
+// 用 Bar 的 shape 而不是 label 来画：recharts 给 label 的 index 是「过滤掉 0 高度段之后」重新排过的下标，
+// 某个月这个游戏没花钱时会把后面月份的下标全部错位；shape 直接拿到这一段自己的 payload（原始行数据），不会错位。
+function renderStackedGameBar(name: string, monthTotals: Map<string, number>, roundTop: boolean) {
+  return (props: {
+    x: number
+    y: number
+    width: number
+    height: number
+    fill: string
+    payload: Record<string, number | string>
+  }) => {
+    const { x, y, width, height, fill, payload } = props
+    const value = Number(payload[name]) || 0
+    const total = monthTotals.get(String(payload.month)) ?? 0
+    const percent = total ? (value / total) * 100 : 0
+    return (
+      <g>
+        <Rectangle x={x} y={y} width={width} height={height} fill={fill} radius={roundTop ? [4, 4, 0, 0] : undefined} />
+        {percent >= 8 && (
+          <text
+            x={x + width / 2}
+            y={y + height / 2}
+            textAnchor="middle"
+            dominantBaseline="central"
+            fontSize={10}
+            fill="#fff"
+          >
+            {percent.toFixed(0)}%
+          </text>
+        )}
+      </g>
+    )
+  }
+}
+
 export default function Summary({ purchases, games }: Props) {
   const logoByGame = useMemo(() => gameLogoMap(games), [games])
   const total = useMemo(() => purchases.reduce((s, p) => s + Number(p.myr), 0), [purchases])
@@ -119,15 +157,29 @@ export default function Summary({ purchases, games }: Props) {
   }, [purchases])
 
   const byMonth = useMemo(() => {
-    const m = new Map<string, number>()
+    const m = new Map<string, Record<string, number>>()
     for (const p of purchases) {
       const ym = p.order_date.slice(0, 7)
-      m.set(ym, (m.get(ym) ?? 0) + Number(p.myr))
+      const row = m.get(ym) ?? {}
+      row[p.game] = (row[p.game] ?? 0) + Number(p.myr)
+      m.set(ym, row)
     }
-    return Array.from(m, ([month, value]) => ({ month, value: Number(value.toFixed(2)) })).sort(
-      (a, b) => a.month.localeCompare(b.month),
-    )
+    return Array.from(m, ([month, games]) => ({
+      month,
+      ...Object.fromEntries(Object.entries(games).map(([g, v]) => [g, Number(v.toFixed(2))])),
+    })).sort((a, b) => a.month.localeCompare(b.month))
   }, [purchases])
+
+  // 保持跟「各游戏占比」饼图一致的游戏顺序（花费高的排前面，堆叠时也在底部）
+  const gameNames = useMemo(() => byGame.map((g) => g.name), [byGame])
+
+  const monthTotals = useMemo(() => {
+    const m = new Map<string, number>()
+    for (const row of byMonth) {
+      m.set(row.month, gameNames.reduce((s, g) => s + (Number(row[g]) || 0), 0))
+    }
+    return m
+  }, [byMonth, gameNames])
 
   return (
     <div className="summary">
@@ -197,7 +249,16 @@ export default function Summary({ purchases, games }: Props) {
                       color: 'var(--text)',
                     }}
                   />
-                  <Bar dataKey="value" fill="var(--primary)" radius={[4, 4, 0, 0]} />
+                  <Legend wrapperStyle={{ fontSize: 12 }} />
+                  {gameNames.map((name, i) => (
+                    <Bar
+                      key={name}
+                      dataKey={name}
+                      stackId="month"
+                      fill={gameColor(name)}
+                      shape={renderStackedGameBar(name, monthTotals, i === gameNames.length - 1)}
+                    />
+                  ))}
                 </BarChart>
               </ResponsiveContainer>
             </Card>
