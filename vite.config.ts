@@ -3,6 +3,7 @@ import react from '@vitejs/plugin-react'
 
 // https://vite.dev/config/
 export default defineConfig({
+  base: '/gacha-spend-tracker/', // GitHub Pages 部署在子路径下，资源引用要加这个前缀
   plugins: [react()],
   server: {
     host: true,               // 允许用自定义域名访问

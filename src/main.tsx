@@ -11,7 +11,7 @@ initTheme()
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <AntdProvider>
-      <BrowserRouter>
+      <BrowserRouter basename="/gacha-spend-tracker">
         <App />
       </BrowserRouter>
     </AntdProvider>
