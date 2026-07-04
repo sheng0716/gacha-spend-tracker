@@ -35,17 +35,18 @@ function renderPieAvatarLabel(logoByGame: Map<string, string | null>) {
   return (props: {
     cx: number
     cy: number
-    midAngle: number
+    midAngle?: number
     outerRadius: number
     index: number
-    name: string
+    name?: string | number
   }) => {
-    const { cx, cy, midAngle, outerRadius, index, name } = props
+    const { cx, cy, midAngle = 0, outerRadius, index, name = '' } = props
+    const gameName = String(name)
     const RADIAN = Math.PI / 180
     const radius = outerRadius + 18
     const x = cx + radius * Math.cos(-midAngle * RADIAN)
     const y = cy + radius * Math.sin(-midAngle * RADIAN)
-    const logo = logoByGame.get(name)
+    const logo = logoByGame.get(gameName)
     const size = 22
 
     const avatar = logo ? (
@@ -72,15 +73,15 @@ function renderPieAvatarLabel(logoByGame: Map<string, string | null>) {
       })()
     ) : (
       <g>
-        <circle cx={x} cy={y} r={size / 2} fill={gameColor(name)} />
+        <circle cx={x} cy={y} r={size / 2} fill={gameColor(gameName)} />
         <text x={x} y={y} textAnchor="middle" dominantBaseline="central" fontSize={11} fill="#fff">
-          {gameInitial(name)}
+          {gameInitial(gameName)}
         </text>
       </g>
     )
 
     return (
-      <AntdTooltip key={`pie-avatar-${index}`} title={name}>
+      <AntdTooltip key={`pie-avatar-${index}`} title={gameName}>
         {avatar}
       </AntdTooltip>
     )
