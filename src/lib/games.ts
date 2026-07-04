@@ -42,12 +42,16 @@ export async function uploadGameLogo(userId: string, gameId: string, file: File)
 // 游戏名 → 头像图片路径。图片放在 public/games/ 下，这里登记映射。
 // 这份静态映射只用于「从历史记录导入」时给老游戏带出已有的图片，
 // 新游戏的 logo 走上面的 Storage 上传，存进 games.logo_url。
-export const GAME_ICONS: Record<string, string> = {
-  'Star Savior': '/games/star-savior.webp',
-  'Stella Sora': '/games/stella-sora.webp',
-  'Horizon Walker': '/games/horizon-walker.jpg',
-  'Arknights: Endfield': '/games/arknights-endfield.webp',
+// 用 BASE_URL 而非硬编码的绝对路径，不然部署在子路径（如 GitHub Pages）时这些图会 404
+const GAME_ICON_FILES: Record<string, string> = {
+  'Star Savior': 'star-savior.webp',
+  'Stella Sora': 'stella-sora.webp',
+  'Horizon Walker': 'horizon-walker.jpg',
+  'Arknights: Endfield': 'arknights-endfield.webp',
 }
+export const GAME_ICONS: Record<string, string> = Object.fromEntries(
+  Object.entries(GAME_ICON_FILES).map(([name, file]) => [name, `${import.meta.env.BASE_URL}games/${file}`]),
+)
 
 export function gameIcon(name: string): string | null {
   return GAME_ICONS[name.trim()] ?? null
