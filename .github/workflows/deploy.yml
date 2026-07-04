@@ -38,5 +38,12 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
+      # Pages 部署偶尔会在服务端临时失败（"Deployment failed, try again later."）。
+      # deploy-pages 自带轮询重试参数：timeout 内每 reporting_interval 轮询一次状态，
+      # 最多容忍 error_count 次查询报错才判失败——把它们调大，抗住服务端的临时抽风。
       - id: deployment
         uses: actions/deploy-pages@v4
+        with:
+          timeout: 600000
+          error_count: 25
+          reporting_interval: 5000
