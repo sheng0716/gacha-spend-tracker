@@ -7,11 +7,13 @@ import type { Game, Product, Purchase, PurchaseInput } from '../types'
 import { supabase } from '../lib/supabase'
 import { deletePurchase } from '../lib/purchases'
 import { downloadCSV } from '../lib/csv'
+import { formatAmount, formatMYR } from '../lib/currency'
 import { DEMO } from '../lib/demoMode'
 import PurchaseForm from '../components/PurchaseForm'
 import PurchaseList from '../components/PurchaseList'
 import Summary from '../components/Summary'
 import ThemeToggle from '../components/ThemeToggle'
+import GameAvatar from '../components/GameAvatar'
 
 interface Props {
   session: Session | null
@@ -82,9 +84,23 @@ export default function Dashboard({
   function onDelete(p: Purchase) {
     modal.confirm({
       title: '删除这笔记录？',
-      content: `${p.order_date} · ${p.game}${p.product_name ? ' · ' + p.product_name : ''}（${
-        p.currency
-      } ${p.cost} ≈ RM ${p.myr}）`,
+      content: (
+        <div style={{ marginTop: 4 }}>
+          <div className="input-with-avatar" style={{ marginBottom: 8 }}>
+            <GameAvatar game={p.game} logoUrl={games.find((g) => g.name === p.game)?.logo_url} size={32} />
+            <div>
+              <div style={{ fontWeight: 600 }}>{p.game}</div>
+              <div className="muted small">{p.product_name || '—'}</div>
+            </div>
+          </div>
+          <Space size={16}>
+            <span className="muted small">{p.order_date}</span>
+            <span className="muted small">
+              {formatAmount(p.cost, p.currency)} ≈ {formatMYR(p.myr)}
+            </span>
+          </Space>
+        </div>
+      ),
       okText: '删除',
       okButtonProps: { danger: true },
       cancelText: '取消',
@@ -158,7 +174,7 @@ export default function Dashboard({
             </Col>
 
             <Col xs={24} lg={8}>
-              <Summary purchases={purchases} />
+              <Summary purchases={purchases} games={games} />
             </Col>
           </Row>
         </div>
@@ -186,6 +202,7 @@ export default function Dashboard({
           onSaved={onSaved}
           onDirtyChange={setFormDirty}
           onSaveOverride={DEMO ? demoSave : undefined}
+          onProductAdded={DEMO ? undefined : refresh}
           onCancel={requestCloseForm}
         />
       </Modal>

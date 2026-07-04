@@ -1,10 +1,24 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Alert, AutoComplete, Button, DatePicker, Form, Input, InputNumber, Select, Space, Tag } from 'antd'
+import {
+  Alert,
+  App as AntdApp,
+  AutoComplete,
+  Button,
+  DatePicker,
+  Form,
+  Input,
+  InputNumber,
+  Select,
+  Space,
+  Tag,
+} from 'antd'
 import dayjs from 'dayjs'
 import type { Game, Product, Purchase, PurchaseInput, RateSource } from '../types'
 import { CURRENCIES, BASE_CURRENCY, formatMYR } from '../lib/currency'
 import { getHistoricalRate } from '../lib/rates'
 import { createPurchase, updatePurchase } from '../lib/purchases'
+import { createProduct } from '../lib/products'
+import { useComboFilter } from '../hooks/useComboFilter'
 import GameAvatar from './GameAvatar'
 import CurrencyFlag from './CurrencyFlag'
 
@@ -24,6 +38,8 @@ interface Props {
   onDirtyChange?: (dirty: boolean) => void
   // 演示模式：提供后用它代替直接写 Supabase
   onSaveOverride?: (input: PurchaseInput, editingId: string | null) => Promise<void>
+  // 提供后，商品名称旁会出现「添加到商品库」按钮（演示模式没有商品库，不传即可）
+  onProductAdded?: () => Promise<void>
 }
 
 export default function PurchaseForm({
@@ -34,7 +50,9 @@ export default function PurchaseForm({
   onCancel,
   onDirtyChange,
   onSaveOverride,
+  onProductAdded,
 }: Props) {
+  const { message } = AntdApp.useApp()
   const [orderDate, setOrderDate] = useState(editing?.order_date ?? today())
   const [game, setGame] = useState(editing?.game ?? '')
   const [productName, setProductName] = useState(editing?.product_name ?? '')
@@ -53,6 +71,7 @@ export default function PurchaseForm({
 
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
+  const [savingProduct, setSavingProduct] = useState(false)
 
   // 记录用户是否手动改动过表单（自动汇率等程序性更新不算）
   const [touched, setTouched] = useState(false)
@@ -71,6 +90,35 @@ export default function PurchaseForm({
     () => (selectedGame ? products.filter((p) => p.game_id === selectedGame.id) : []),
     [products, selectedGame],
   )
+  const productExists = useMemo(
+    () => gameProducts.some((p) => p.name === productName.trim()),
+    [gameProducts, productName],
+  )
+  const canAddProduct =
+    !!onProductAdded && !!selectedGame && !!productName.trim() && !productExists
+
+  async function addProductToDb() {
+    if (!selectedGame) return
+    if (isNaN(costNum) || costNum <= 0) {
+      message.error('请先填写有效的原币金额，再添加到商品库。')
+      return
+    }
+    setSavingProduct(true)
+    try {
+      await createProduct({
+        game_id: selectedGame.id,
+        name: productName.trim(),
+        currency: currency.toUpperCase(),
+        price: costNum,
+      })
+      message.success('已添加到商品库。')
+      await onProductAdded?.()
+    } catch (e) {
+      message.error(e instanceof Error ? e.message : String(e))
+    } finally {
+      setSavingProduct(false)
+    }
+  }
 
   // 自动换算：order_date / currency / cost 变化且处于 auto 模式时，取历史汇率
   const debounceRef = useRef<number | undefined>(undefined)
@@ -155,6 +203,10 @@ export default function PurchaseForm({
 
   const isBase = currency.toUpperCase() === BASE_CURRENCY
 
+  const gameFilter = useComboFilter(game)
+  const productFilter = useComboFilter(productName)
+  const currencyFilter = useComboFilter(currency)
+
   return (
     <Form className="form" layout="vertical" onFinish={submit} requiredMark={false}>
       <div className="grid2">
@@ -189,9 +241,7 @@ export default function PurchaseForm({
                   </Space>
                 ),
               }))}
-              filterOption={(input, option) =>
-                (option?.value ?? '').toLowerCase().includes(input.toLowerCase())
-              }
+              {...gameFilter}
             />
           </div>
         </Form.Item>
@@ -214,11 +264,20 @@ export default function PurchaseForm({
             }
           }}
           options={gameProducts.map((p) => ({ value: p.name }))}
-          filterOption={(input, option) =>
-            (option?.value ?? '').toLowerCase().includes(input.toLowerCase())
-          }
+          {...productFilter}
           placeholder="如 30-Day Stellagem Supply / 小月卡"
         />
+        {canAddProduct && (
+          <Button
+            type="link"
+            size="small"
+            style={{ padding: '4px 0 0' }}
+            loading={savingProduct}
+            onClick={addProductToDb}
+          >
+            ＋ 添加到商品库（{selectedGame?.name}）
+          </Button>
+        )}
       </Form.Item>
 
       <div className="grid2">
@@ -231,9 +290,7 @@ export default function PurchaseForm({
               setCurrency(v.toUpperCase())
             }}
             options={CURRENCIES.map((c) => ({ value: c, label: <CurrencyFlag code={c} /> }))}
-            filterOption={(input, option) =>
-              (option?.value ?? '').toLowerCase().includes(input.toLowerCase())
-            }
+            {...currencyFilter}
           />
         </Form.Item>
         <Form.Item label="原币金额" required>

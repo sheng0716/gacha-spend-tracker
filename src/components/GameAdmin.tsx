@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { App as AntdApp, Button, Form, Input, Modal, Space, Upload } from 'antd'
+import { App as AntdApp, Button, Form, Input, Modal, Radio, Space, Upload } from 'antd'
 import { SearchOutlined } from '@ant-design/icons'
 import type { UploadFile } from 'antd'
 import { DeleteOutlined, EditOutlined, PlusOutlined } from '@ant-design/icons'
@@ -17,6 +17,20 @@ interface Props {
   onChanged: () => void
 }
 
+type ImportRange = 'all' | '1m' | '3m' | '6m'
+
+const IMPORT_RANGE_MONTHS: Record<Exclude<ImportRange, 'all'>, number> = {
+  '1m': 1,
+  '3m': 3,
+  '6m': 6,
+}
+
+function cutoffDate(months: number): string {
+  const d = new Date()
+  d.setMonth(d.getMonth() - months)
+  return d.toISOString().slice(0, 10)
+}
+
 export default function GameAdmin({ userId, games, products, purchases, onChanged }: Props) {
   const { modal, message } = AntdApp.useApp()
   const [editing, setEditing] = useState<Game | null>(null)
@@ -25,6 +39,8 @@ export default function GameAdmin({ userId, games, products, purchases, onChange
   const [fileList, setFileList] = useState<UploadFile[]>([])
   const [saving, setSaving] = useState(false)
   const [importing, setImporting] = useState(false)
+  const [importModalOpen, setImportModalOpen] = useState(false)
+  const [importRange, setImportRange] = useState<ImportRange>('1m')
   const [search, setSearch] = useState('')
   const [managingGameId, setManagingGameId] = useState<string | null>(null)
 
@@ -102,8 +118,13 @@ export default function GameAdmin({ userId, games, products, purchases, onChange
   async function doImport() {
     setImporting(true)
     try {
-      const { gamesCreated, productsCreated } = await importGamesAndProductsFromPurchases(purchases)
+      const scoped =
+        importRange === 'all'
+          ? purchases
+          : purchases.filter((p) => p.order_date >= cutoffDate(IMPORT_RANGE_MONTHS[importRange]))
+      const { gamesCreated, productsCreated } = await importGamesAndProductsFromPurchases(scoped)
       message.success(`导入完成：新增 ${gamesCreated} 个游戏、${productsCreated} 个商品。`)
+      setImportModalOpen(false)
       onChanged()
     } catch (e) {
       message.error(e instanceof Error ? e.message : String(e))
@@ -113,14 +134,8 @@ export default function GameAdmin({ userId, games, products, purchases, onChange
   }
 
   function runImport() {
-    modal.confirm({
-      title: '从历史记录导入？',
-      content: '会根据消费记录里出现过的游戏和商品名称，自动新增缺失的游戏与商品。',
-      okText: '导入',
-      cancelText: '取消',
-      maskClosable: true,
-      onOk: doImport,
-    })
+    setImportRange('1m')
+    setImportModalOpen(true)
   }
 
   return (
@@ -142,6 +157,29 @@ export default function GameAdmin({ userId, games, products, purchases, onChange
           style={{ maxWidth: 320 }}
         />
       </div>
+
+      <Modal
+        title="从历史记录导入？"
+        open={importModalOpen}
+        onCancel={() => setImportModalOpen(false)}
+        onOk={doImport}
+        okText="导入"
+        cancelText="取消"
+        confirmLoading={importing}
+        maskClosable
+      >
+        <p>会根据消费记录里出现过的游戏和商品名称，自动新增缺失的游戏与商品。</p>
+        <Radio.Group
+          value={importRange}
+          onChange={(e) => setImportRange(e.target.value)}
+          style={{ display: 'flex', flexDirection: 'column', gap: 8 }}
+        >
+          <Radio value="all">全部记录</Radio>
+          <Radio value="1m">最近一个月</Radio>
+          <Radio value="3m">最近三个月</Radio>
+          <Radio value="6m">最近半年</Radio>
+        </Radio.Group>
+      </Modal>
 
       <Modal
         title={editing ? '编辑游戏' : '新增游戏'}

@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { Avatar, Card, Col, Row, Space, Statistic } from 'antd'
+import { Avatar, Card, Col, Row, Space, Statistic, Tooltip as AntdTooltip } from 'antd'
 import {
   ArrowDownOutlined,
   ArrowUpOutlined,
@@ -17,18 +17,81 @@ import {
   PieChart,
   Pie,
   Cell,
-  Legend,
 } from 'recharts'
-import type { Purchase } from '../types'
+import type { Game, Purchase } from '../types'
 import { formatMYR } from '../lib/currency'
+import { gameColor, gameInitial } from '../lib/games'
 
 const COLORS = ['#7c5cff', '#ff7ab6', '#39c0ed', '#ffc14d', '#5ad19a', '#ff8a65', '#a78bfa']
 
 interface Props {
   purchases: Purchase[]
+  games: Game[]
 }
 
-export default function Summary({ purchases }: Props) {
+// 饼图切片外围的头像标签：有 logo 就裁成圆形贴图，没有就画色块首字母（跟 GameAvatar 兜底逻辑一致）
+// 用 antd Tooltip 包一层，鼠标停在头像上显示跟全站风格一致的悬浮提示（比浏览器原生 title 好看）
+function renderPieAvatarLabel(logoByGame: Map<string, string | null>) {
+  return (props: {
+    cx: number
+    cy: number
+    midAngle: number
+    outerRadius: number
+    index: number
+    name: string
+  }) => {
+    const { cx, cy, midAngle, outerRadius, index, name } = props
+    const RADIAN = Math.PI / 180
+    const radius = outerRadius + 18
+    const x = cx + radius * Math.cos(-midAngle * RADIAN)
+    const y = cy + radius * Math.sin(-midAngle * RADIAN)
+    const logo = logoByGame.get(name)
+    const size = 22
+
+    const avatar = logo ? (
+      (() => {
+        const clipId = `pie-avatar-clip-${index}`
+        return (
+          <g>
+            <defs>
+              <clipPath id={clipId}>
+                <circle cx={x} cy={y} r={size / 2} />
+              </clipPath>
+            </defs>
+            <image
+              href={logo}
+              x={x - size / 2}
+              y={y - size / 2}
+              width={size}
+              height={size}
+              clipPath={`url(#${clipId})`}
+              preserveAspectRatio="xMidYMid slice"
+            />
+          </g>
+        )
+      })()
+    ) : (
+      <g>
+        <circle cx={x} cy={y} r={size / 2} fill={gameColor(name)} />
+        <text x={x} y={y} textAnchor="middle" dominantBaseline="central" fontSize={11} fill="#fff">
+          {gameInitial(name)}
+        </text>
+      </g>
+    )
+
+    return (
+      <AntdTooltip key={`pie-avatar-${index}`} title={name}>
+        {avatar}
+      </AntdTooltip>
+    )
+  }
+}
+
+export default function Summary({ purchases, games }: Props) {
+  const logoByGame = useMemo(
+    () => new Map(games.map((g) => [g.name, g.logo_url])),
+    [games],
+  )
   const total = useMemo(() => purchases.reduce((s, p) => s + Number(p.myr), 0), [purchases])
 
   const thisMonthTotal = useMemo(() => {
@@ -145,7 +208,16 @@ export default function Summary({ purchases }: Props) {
             <Card title="各游戏占比 (MYR)">
               <ResponsiveContainer width="100%" height={220}>
                 <PieChart>
-                  <Pie data={byGame} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80}>
+                  <Pie
+                    data={byGame}
+                    dataKey="value"
+                    nameKey="name"
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={65}
+                    label={renderPieAvatarLabel(logoByGame)}
+                    labelLine={{ stroke: 'var(--border)' }}
+                  >
                     {byGame.map((_, i) => (
                       <Cell key={i} fill={COLORS[i % COLORS.length]} />
                     ))}
@@ -159,7 +231,6 @@ export default function Summary({ purchases }: Props) {
                       color: 'var(--text)',
                     }}
                   />
-                  <Legend wrapperStyle={{ fontSize: 12 }} />
                 </PieChart>
               </ResponsiveContainer>
             </Card>

@@ -14,6 +14,7 @@ import { DeleteOutlined, EditOutlined } from '@ant-design/icons'
 import type { Product } from '../types'
 import { CURRENCIES, formatAmount } from '../lib/currency'
 import { createProduct, deleteProduct, updateProduct } from '../lib/products'
+import { useComboFilter } from '../hooks/useComboFilter'
 import CurrencyFlag from './CurrencyFlag'
 
 interface Props {
@@ -35,6 +36,7 @@ export default function ProductAdmin({ gameId, products, onChanged }: Props) {
     () => products.filter((p) => p.game_id === gameId),
     [products, gameId],
   )
+  const currencyFilter = useComboFilter(currency)
 
   function openNew() {
     setEditing(null)
@@ -152,9 +154,7 @@ export default function ProductAdmin({ gameId, products, onChanged }: Props) {
                   value={currency}
                   onChange={(v) => setCurrency(v.toUpperCase())}
                   options={CURRENCIES.map((c) => ({ value: c, label: <CurrencyFlag code={c} /> }))}
-                  filterOption={(input, option) =>
-                    (option?.value ?? '').toLowerCase().includes(input.toLowerCase())
-                  }
+                  {...currencyFilter}
                 />
                 <InputNumber
                   style={{ width: '65%' }}
