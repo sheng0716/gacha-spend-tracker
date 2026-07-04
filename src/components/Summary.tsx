@@ -96,14 +96,14 @@ function renderPieAvatarLabel(logoByGame: Map<string, string | null>) {
 // 某个月这个游戏没花钱时会把后面月份的下标全部错位；shape 直接拿到这一段自己的 payload（原始行数据），不会错位。
 function renderStackedGameBar(name: string, monthTotals: Map<string, number>, roundTop: boolean) {
   return (props: {
-    x: number
-    y: number
-    width: number
-    height: number
-    fill: string
-    payload: Record<string, number | string>
+    x?: number
+    y?: number
+    width?: number
+    height?: number
+    fill?: string
+    payload?: Record<string, number | string>
   }) => {
-    const { x, y, width, height, fill, payload } = props
+    const { x = 0, y = 0, width = 0, height = 0, fill, payload = {} } = props
     const value = Number(payload[name]) || 0
     const total = monthTotals.get(String(payload.month)) ?? 0
     const percent = total ? (value / total) * 100 : 0
@@ -167,7 +167,9 @@ export default function Summary({ purchases, games }: Props) {
     return Array.from(m, ([month, games]) => ({
       month,
       ...Object.fromEntries(Object.entries(games).map(([g, v]) => [g, Number(v.toFixed(2))])),
-    })).sort((a, b) => a.month.localeCompare(b.month))
+    }) as Record<string, number | string>).sort((a, b) =>
+      String(a.month).localeCompare(String(b.month)),
+    )
   }, [purchases])
 
   // 保持跟「各游戏占比」饼图一致的游戏顺序（花费高的排前面，堆叠时也在底部）
@@ -176,7 +178,7 @@ export default function Summary({ purchases, games }: Props) {
   const monthTotals = useMemo(() => {
     const m = new Map<string, number>()
     for (const row of byMonth) {
-      m.set(row.month, gameNames.reduce((s, g) => s + (Number(row[g]) || 0), 0))
+      m.set(String(row.month), gameNames.reduce((s, g) => s + (Number(row[g]) || 0), 0))
     }
     return m
   }, [byMonth, gameNames])
