@@ -68,6 +68,12 @@ export function resolveGameLogo(logoUrl: string | null | undefined, name: string
   return logoUrl
 }
 
+// 游戏名 → 原始 logo_url 的查找表。多个列表/图表都要按游戏名取 logo，统一从这里建 Map，
+// 免得各处重复写 new Map(...) 或逐行 games.find()（后者是每行 O(n)）。取到的值仍要过 resolveGameLogo。
+export function gameLogoMap(games: Game[]): Map<string, string | null> {
+  return new Map(games.map((g) => [g.name, g.logo_url]))
+}
+
 // 没有头像的游戏：根据名字算一个稳定的颜色，做首字母圆形头像
 export function gameColor(name: string): string {
   let h = 0

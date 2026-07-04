@@ -6,6 +6,7 @@ import type { Game, Purchase } from '../types'
 import { formatAmount, formatMYR } from '../lib/currency'
 import GameAvatar from './GameAvatar'
 import CurrencyFlag from './CurrencyFlag'
+import { gameLogoMap } from '../lib/games'
 
 const { RangePicker } = DatePicker
 
@@ -17,10 +18,7 @@ interface Props {
 }
 
 export default function PurchaseList({ purchases, games, onEdit, onDelete }: Props) {
-  const logoByGame = useMemo(
-    () => new Map(games.map((g) => [g.name, g.logo_url])),
-    [games],
-  )
+  const logoByGame = useMemo(() => gameLogoMap(games), [games])
   const [gameFilter, setGameFilter] = useState<string>('')
   const [currencyFilter, setCurrencyFilter] = useState<string>('')
   const [range, setRange] = useState<[Dayjs | null, Dayjs | null] | null>([

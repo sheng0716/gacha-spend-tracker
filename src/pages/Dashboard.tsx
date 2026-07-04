@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Alert, App as AntdApp, Button, Col, Layout, Modal, Row, Space, Spin } from 'antd'
 import { SettingOutlined } from '@ant-design/icons'
 import { useNavigate } from 'react-router-dom'
@@ -14,6 +14,7 @@ import PurchaseList from '../components/PurchaseList'
 import Summary from '../components/Summary'
 import ThemeToggle from '../components/ThemeToggle'
 import GameAvatar from '../components/GameAvatar'
+import { gameLogoMap } from '../lib/games'
 
 interface Props {
   session: Session | null
@@ -40,6 +41,7 @@ export default function Dashboard({
 }: Props) {
   const navigate = useNavigate()
   const { modal, message } = AntdApp.useApp()
+  const logoByGame = useMemo(() => gameLogoMap(games), [games])
 
   const [showForm, setShowForm] = useState(false)
   const [editing, setEditing] = useState<Purchase | null>(null)
@@ -87,7 +89,7 @@ export default function Dashboard({
       content: (
         <div style={{ marginTop: 4 }}>
           <div className="input-with-avatar" style={{ marginBottom: 8 }}>
-            <GameAvatar game={p.game} logoUrl={games.find((g) => g.name === p.game)?.logo_url} size={32} />
+            <GameAvatar game={p.game} logoUrl={logoByGame.get(p.game)} size={32} />
             <div>
               <div style={{ fontWeight: 600 }}>{p.game}</div>
               <div className="muted small">{p.product_name || '—'}</div>

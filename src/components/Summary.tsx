@@ -20,7 +20,7 @@ import {
 } from 'recharts'
 import type { Game, Purchase } from '../types'
 import { formatMYR } from '../lib/currency'
-import { gameColor, gameInitial, resolveGameLogo } from '../lib/games'
+import { gameColor, gameInitial, resolveGameLogo, gameLogoMap } from '../lib/games'
 
 const COLORS = ['#7c5cff', '#ff7ab6', '#39c0ed', '#ffc14d', '#5ad19a', '#ff8a65', '#a78bfa']
 
@@ -90,10 +90,7 @@ function renderPieAvatarLabel(logoByGame: Map<string, string | null>) {
 }
 
 export default function Summary({ purchases, games }: Props) {
-  const logoByGame = useMemo(
-    () => new Map(games.map((g) => [g.name, g.logo_url])),
-    [games],
-  )
+  const logoByGame = useMemo(() => gameLogoMap(games), [games])
   const total = useMemo(() => purchases.reduce((s, p) => s + Number(p.myr), 0), [purchases])
 
   const thisMonthTotal = useMemo(() => {
