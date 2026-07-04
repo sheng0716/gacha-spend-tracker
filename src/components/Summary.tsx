@@ -20,7 +20,7 @@ import {
 } from 'recharts'
 import type { Game, Purchase } from '../types'
 import { formatMYR } from '../lib/currency'
-import { gameColor, gameInitial } from '../lib/games'
+import { gameColor, gameInitial, resolveGameLogo } from '../lib/games'
 
 const COLORS = ['#7c5cff', '#ff7ab6', '#39c0ed', '#ffc14d', '#5ad19a', '#ff8a65', '#a78bfa']
 
@@ -46,7 +46,8 @@ function renderPieAvatarLabel(logoByGame: Map<string, string | null>) {
     const radius = outerRadius + 18
     const x = cx + radius * Math.cos(-midAngle * RADIAN)
     const y = cy + radius * Math.sin(-midAngle * RADIAN)
-    const logo = logoByGame.get(gameName)
+    // 跟 GameAvatar 一样过一遍 resolveGameLogo：DB 里存的静态图标路径要按 BASE_URL 重拼，不然子路径部署会 404
+    const logo = resolveGameLogo(logoByGame.get(gameName), gameName)
     const size = 22
 
     const avatar = logo ? (
