@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { App as AntdApp, Button, Image, Popconfirm, Slider, Space, Upload } from 'antd'
-import { PlusOutlined } from '@ant-design/icons'
+import { PlusOutlined, UploadOutlined } from '@ant-design/icons'
 import {
   type BackgroundHistoryItem,
   deleteBackgroundFile,
@@ -124,15 +124,26 @@ export default function BackgroundAdmin({ userId, lightBgUrl, lightBgPosition, o
         disabled={uploading}
         accept="image/*"
         beforeUpload={handleUpload}
+        className="bg-uploader"
       >
         {lightBgUrl ? (
-          <img src={lightBgUrl} alt="背景预览" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          // 已有背景时，图片上叠一层 hover 才显示的「点击更换」遮罩，明确告诉用户这里可以点
+          <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+            <img src={lightBgUrl} alt="背景预览" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            <div className="bg-uploader-overlay">
+              <UploadOutlined />
+              <span>点击更换</span>
+            </div>
+          </div>
         ) : (
           <span>
-            <PlusOutlined /> 上传
+            <PlusOutlined /> 上传背景
           </span>
         )}
       </Upload>
+      <div className="muted small" style={{ marginTop: 6 }}>
+        {lightBgUrl ? '点上方图片可更换背景。' : '点上方方框选择一张图片作为背景。'}
+      </div>
 
       {lightBgUrl && (
         <>

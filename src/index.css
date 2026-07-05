@@ -323,3 +323,23 @@ html body {
     padding: 12px;
   }
 }
+
+/* 背景上传框：hover 时在预览图上浮出「点击更换」遮罩，提示这里可以点 */
+.bg-uploader-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  background: rgba(0, 0, 0, 0.5);
+  color: #fff;
+  font-size: 12px;
+  opacity: 0;
+  transition: opacity 0.15s;
+  border-radius: 6px;
+}
+.bg-uploader:hover .bg-uploader-overlay {
+  opacity: 1;
+}
