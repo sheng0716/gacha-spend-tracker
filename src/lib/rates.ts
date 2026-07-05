@@ -19,7 +19,37 @@ function shiftDate(date: string, days: number): string {
   return d.toISOString().slice(0, 10)
 }
 
+// 历史汇率是固定不变的（某天某币种→MYR 的中间价不会再改），所以按 date+currency 永久缓存。
+// 命中缓存就完全跳过网络，重复录入同一天的单几乎瞬间完成，也少给免费 CDN 添压力。
+const CACHE_PREFIX = 'rate:'
+
+function cacheKey(date: string, base: string): string {
+  return `${CACHE_PREFIX}${date}:${base.toLowerCase()}:${BASE_CURRENCY.toLowerCase()}`
+}
+
+function readCache(date: string, base: string): number | null {
+  try {
+    const v = localStorage.getItem(cacheKey(date, base))
+    if (v == null) return null
+    const n = Number(v)
+    return Number.isFinite(n) && n > 0 ? n : null
+  } catch {
+    return null
+  }
+}
+
+function writeCache(date: string, base: string, rate: number): void {
+  try {
+    localStorage.setItem(cacheKey(date, base), String(rate))
+  } catch {
+    // localStorage 不可用（隐私模式/配额满）时静默降级为不缓存
+  }
+}
+
 async function fetchOnDate(date: string, base: string): Promise<number | null> {
+  const cached = readCache(date, base)
+  if (cached != null) return cached
+
   const target = BASE_CURRENCY.toLowerCase()
   const b = base.toLowerCase()
   for (const url of dateUrls(date, base)) {
@@ -28,7 +58,10 @@ async function fetchOnDate(date: string, base: string): Promise<number | null> {
       if (!res.ok) continue
       const data = await res.json()
       const rate = data?.[b]?.[target]
-      if (typeof rate === 'number' && rate > 0) return rate
+      if (typeof rate === 'number' && rate > 0) {
+        writeCache(date, base, rate)
+        return rate
+      }
     } catch {
       // 试下一个源
     }
