@@ -1,10 +1,10 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, type ClipboardEvent } from 'react'
 import { App as AntdApp, Button, Form, Input, Modal, Radio, Space, Upload } from 'antd'
 import { SearchOutlined } from '@ant-design/icons'
 import type { UploadFile } from 'antd'
 import { DeleteOutlined, EditOutlined, PlusOutlined } from '@ant-design/icons'
 import type { Game, Product, Purchase } from '../types'
-import { createGame, deleteGame, updateGame, uploadGameLogo } from '../lib/games'
+import { createGame, deleteGame, updateGame, uploadGameLogo, deleteGameLogoIfUploaded } from '../lib/games'
 import { importGamesAndProductsFromPurchases } from '../lib/migrate'
 import GameAvatar from './GameAvatar'
 import ProductAdmin from './ProductAdmin'
@@ -79,14 +79,17 @@ export default function GameAdmin({ userId, games, products, purchases, onChange
     setSaving(true)
     try {
       const game = editing ?? (await createGame({ name: name.trim(), logo_url: null }))
+      const oldLogo = editing?.logo_url ?? null
       const file = fileList[0]?.originFileObj
-      let logoUrl = editing?.logo_url ?? null
+      let logoUrl = oldLogo
       if (file) {
         logoUrl = await uploadGameLogo(userId, game.id, file)
       } else if (fileList.length === 0) {
         logoUrl = null
       }
       await updateGame(game.id, { name: name.trim(), logo_url: logoUrl })
+      // logo 变了（换新图或清空），把旧的 Storage 文件清掉，免得成孤儿文件
+      if (oldLogo && oldLogo !== logoUrl) await deleteGameLogoIfUploaded(oldLogo)
       setShowForm(false)
       onChanged()
     } catch (e) {
@@ -106,6 +109,7 @@ export default function GameAdmin({ userId, games, products, purchases, onChange
       onOk: async () => {
         try {
           await deleteGame(g.id)
+          await deleteGameLogoIfUploaded(g.logo_url) // 连同它的 logo 一起从 Storage 清掉
           onChanged()
         } catch (e) {
           message.error(e instanceof Error ? e.message : String(e))
@@ -136,6 +140,26 @@ export default function GameAdmin({ userId, games, products, purchases, onChange
   function runImport() {
     setImportRange('1m')
     setImportModalOpen(true)
+  }
+
+  // 从剪贴板粘贴图片当 logo：支持「右键复制图片」「截图」等。
+  // 剪贴板里的图片是 Blob，包成 antd UploadFile（带 originFileObj 供提交上传、thumbUrl 供预览）。
+  function handlePasteLogo(e: ClipboardEvent) {
+    const item = Array.from(e.clipboardData.items).find((i) => i.type.startsWith('image/'))
+    if (!item) return
+    const blob = item.getAsFile()
+    if (!blob) return
+    e.preventDefault()
+    const ext = blob.type.split('/')[1] || 'png'
+    const file = new File([blob], `pasted-logo.${ext}`, { type: blob.type })
+    const uploadFile: UploadFile = {
+      uid: `paste-${Date.now()}`,
+      name: file.name,
+      status: 'done',
+      originFileObj: file as UploadFile['originFileObj'],
+      thumbUrl: URL.createObjectURL(file),
+    }
+    setFileList([uploadFile])
   }
 
   return (
@@ -192,27 +216,33 @@ export default function GameAdmin({ userId, games, products, purchases, onChange
           <Form.Item label="游戏名称" required>
             <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="如 Star Savior" />
           </Form.Item>
-          <Form.Item label="Logo（可选）">
-            <Upload
-              listType="picture-card"
-              maxCount={1}
-              accept="image/*"
-              fileList={fileList}
-              beforeUpload={(file) => {
-                if (!file.type.startsWith('image/')) {
-                  message.error('只能上传图片文件')
-                  return Upload.LIST_IGNORE
-                }
-                return false
-              }}
-              onChange={({ fileList: fl }) => setFileList(fl)}
-            >
-              {fileList.length === 0 && (
-                <span>
-                  <PlusOutlined /> 上传
-                </span>
-              )}
-            </Upload>
+          <Form.Item
+            label="Logo（可选）"
+            help="可直接从谷歌右键复制图片，然后点下方方框粘贴（Ctrl/⌘+V）；也可以点击上传文件。"
+          >
+            {/* tabIndex 让方框可聚焦，聚焦后 Ctrl/⌘+V 粘贴的图片会被 onPaste 捕获 */}
+            <div tabIndex={0} onPaste={handlePasteLogo} style={{ outline: 'none', display: 'inline-block' }}>
+              <Upload
+                listType="picture-card"
+                maxCount={1}
+                accept="image/*"
+                fileList={fileList}
+                beforeUpload={(file) => {
+                  if (!file.type.startsWith('image/')) {
+                    message.error('只能上传图片文件')
+                    return Upload.LIST_IGNORE
+                  }
+                  return false
+                }}
+                onChange={({ fileList: fl }) => setFileList(fl)}
+              >
+                {fileList.length === 0 && (
+                  <span>
+                    <PlusOutlined /> 上传/粘贴
+                  </span>
+                )}
+              </Upload>
+            </div>
           </Form.Item>
           <div className="form-actions">
             <Button onClick={() => setShowForm(false)}>取消</Button>
