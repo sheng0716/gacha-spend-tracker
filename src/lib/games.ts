@@ -30,13 +30,34 @@ export async function deleteGame(id: string): Promise<void> {
   if (error) throw error
 }
 
+const LOGO_BUCKET = 'game-logos'
+
 // 上传游戏 logo 到 Storage，返回可直接用于 <img src> 的公开地址
 export async function uploadGameLogo(userId: string, gameId: string, file: File): Promise<string> {
   const path = `${userId}/${gameId}/${uuid()}-${file.name}`
-  const { error } = await supabase.storage.from('game-logos').upload(path, file, { upsert: false })
+  const { error } = await supabase.storage.from(LOGO_BUCKET).upload(path, file, { upsert: false })
   if (error) throw error
-  const { data } = supabase.storage.from('game-logos').getPublicUrl(path)
+  const { data } = supabase.storage.from(LOGO_BUCKET).getPublicUrl(path)
   return data.publicUrl
+}
+
+// 从公开 URL 反解出 Storage 内的对象路径。只对本 bucket 且是上传得到的 http URL 生效；
+// 静态图标（public/games/ 下）或空值返回 null（那些不在 Storage 里，不能删）。
+function logoStoragePath(logoUrl: string | null | undefined): string | null {
+  if (!logoUrl || !/^https?:\/\//.test(logoUrl)) return null
+  const marker = `/${LOGO_BUCKET}/`
+  const i = logoUrl.indexOf(marker)
+  if (i === -1) return null
+  return decodeURIComponent(logoUrl.slice(i + marker.length))
+}
+
+// 尽力删除某个已上传 logo 对应的 Storage 文件（换图/清空/删游戏时清理，避免孤儿文件）。
+// 删不掉不阻断主流程——DB 那边通常已经改好了，这里只是清垃圾，失败就告警。
+export async function deleteGameLogoIfUploaded(logoUrl: string | null | undefined): Promise<void> {
+  const path = logoStoragePath(logoUrl)
+  if (!path) return
+  const { error } = await supabase.storage.from(LOGO_BUCKET).remove([path])
+  if (error) console.warn('删除旧 logo 文件失败（已残留在 Storage）:', error.message)
 }
 
 // 游戏名 → 头像图片路径。图片放在 public/games/ 下，这里登记映射。
