@@ -1,5 +1,5 @@
 import { useMemo, useState, type ClipboardEvent } from 'react'
-import { App as AntdApp, Button, Form, Input, Modal, Radio, Space, Upload } from 'antd'
+import { App as AntdApp, Button, Form, Image, Input, Modal, Radio, Space, Upload } from 'antd'
 import { SearchOutlined } from '@ant-design/icons'
 import type { UploadFile } from 'antd'
 import { DeleteOutlined, EditOutlined, PlusOutlined } from '@ant-design/icons'
@@ -37,6 +37,8 @@ export default function GameAdmin({ userId, games, products, purchases, onChange
   const [showForm, setShowForm] = useState(false)
   const [name, setName] = useState('')
   const [fileList, setFileList] = useState<UploadFile[]>([])
+  const [pasteReady, setPasteReady] = useState(false)
+  const [previewLogo, setPreviewLogo] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const [importing, setImporting] = useState(false)
   const [importModalOpen, setImportModalOpen] = useState(false)
@@ -219,12 +221,9 @@ export default function GameAdmin({ userId, games, products, purchases, onChange
           <Form.Item label="游戏名称" required>
             <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="如 Star Savior" />
           </Form.Item>
-          <Form.Item
-            label="Logo（可选）"
-            help="可直接从谷歌右键复制图片，然后点下方方框粘贴（Ctrl/⌘+V）；也可以点击上传文件。"
-          >
-            {/* tabIndex 让方框可聚焦，聚焦后 Ctrl/⌘+V 粘贴的图片会被 onPaste 捕获 */}
-            <div tabIndex={0} onPaste={handlePasteLogo} style={{ outline: 'none', display: 'inline-block' }}>
+          <Form.Item label="Logo（可选）" style={{ marginBottom: 8 }}>
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+              {/* 左：点击上传（antd 的 picture-card，点它会打开文件选择） */}
               <Upload
                 listType="picture-card"
                 maxCount={1}
@@ -238,15 +237,64 @@ export default function GameAdmin({ userId, games, products, purchases, onChange
                   return false
                 }}
                 onChange={({ fileList: fl }) => setFileList(fl)}
+                onPreview={(file) => {
+                  // 页内大图预览：优先用已有 url（编辑时的当前 logo），否则用刚选/粘贴文件的本地地址
+                  const url = file.url || file.thumbUrl || (file.originFileObj && URL.createObjectURL(file.originFileObj))
+                  if (url) setPreviewLogo(url)
+                }}
               >
                 {fileList.length === 0 && (
                   <span>
-                    <PlusOutlined /> 上传/粘贴
+                    <PlusOutlined /> 上传
                   </span>
                 )}
               </Upload>
+              {/* 右：专门的粘贴区。点击只聚焦（不弹文件框），聚焦后 Ctrl/⌘+V 把剪贴板图片贴进来 */}
+              <div
+                tabIndex={0}
+                onPaste={handlePasteLogo}
+                onFocus={() => setPasteReady(true)}
+                onBlur={() => setPasteReady(false)}
+                className="paste-zone"
+                style={{
+                  width: 102,
+                  height: 102,
+                  border: `1px dashed ${pasteReady ? 'var(--primary)' : 'var(--border)'}`,
+                  borderRadius: 8,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 4,
+                  cursor: 'pointer',
+                  outline: 'none',
+                  color: pasteReady ? 'var(--primary)' : 'var(--muted)',
+                  fontSize: 12,
+                  textAlign: 'center',
+                  padding: 6,
+                }}
+              >
+                {pasteReady ? '现在按 Ctrl/⌘+V 粘贴' : '点这里，再粘贴图片'}
+              </div>
+            </div>
+            <div className="muted small" style={{ marginTop: 8 }}>
+              从谷歌右键「复制图片」，点右侧方框后按 Ctrl/⌘+V；或点左侧方框上传文件。
             </div>
           </Form.Item>
+          {/* 页内大图预览：隐藏 Image 本体，只借它的灯箱（受控 visible），点上传项的预览眼睛图标打开 */}
+          {previewLogo && (
+            <Image
+              style={{ display: 'none' }}
+              src={previewLogo}
+              preview={{
+                visible: true,
+                src: previewLogo,
+                onVisibleChange: (v) => {
+                  if (!v) setPreviewLogo(null)
+                },
+              }}
+            />
+          )}
           <div className="form-actions">
             <Button onClick={() => setShowForm(false)}>取消</Button>
             <Button type="primary" htmlType="submit" loading={saving}>
