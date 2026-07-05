@@ -54,7 +54,8 @@ async function fetchOnDate(date: string, base: string): Promise<number | null> {
   const b = base.toLowerCase()
   for (const url of dateUrls(date, base)) {
     try {
-      const res = await fetch(url)
+      // 每个源 5 秒超时：CDN 卡住时不至于让表单一直转圈（最坏 2 源 × 回退 7 天会串起来很久）
+      const res = await fetch(url, { signal: AbortSignal.timeout(5000) })
       if (!res.ok) continue
       const data = await res.json()
       const rate = data?.[b]?.[target]
