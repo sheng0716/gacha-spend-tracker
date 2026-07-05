@@ -16,19 +16,9 @@ export interface Purchase {
   created_at: string
 }
 
-// 新增 / 编辑表单用的输入结构（不含数据库自动生成字段）
-export interface PurchaseInput {
-  order_date: string
-  game: string
-  product_name: string | null
-  currency: string
-  cost: number
-  status: string | null
-  rate: number | null
-  rate_source: RateSource
-  myr: number
-  note: string | null
-}
+// 新增 / 编辑表单用的输入结构：从 Purchase 去掉数据库自动生成的字段派生，
+// 这样给 purchases 表加列时只改 Purchase 一处即可。
+export type PurchaseInput = Omit<Purchase, 'id' | 'user_id' | 'created_at'>
 
 // 管理后台：目前在玩的游戏
 export interface Game {
@@ -39,10 +29,7 @@ export interface Game {
   created_at: string
 }
 
-export interface GameInput {
-  name: string
-  logo_url: string | null
-}
+export type GameInput = Omit<Game, 'id' | 'user_id' | 'created_at'>
 
 // 管理后台：某个游戏下的商品（用于表单选择后自动带出币种/价格）
 export interface Product {
@@ -55,12 +42,7 @@ export interface Product {
   created_at: string
 }
 
-export interface ProductInput {
-  game_id: string
-  name: string
-  currency: string
-  price: number
-}
+export type ProductInput = Omit<Product, 'id' | 'user_id' | 'created_at'>
 
 // 用户设置：目前只有亮色模式自定义背景图
 export interface Settings {
