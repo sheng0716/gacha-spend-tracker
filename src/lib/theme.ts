@@ -32,11 +32,11 @@ export function antdTokens(t: Theme) {
   return t === 'dark'
     ? {
         colorPrimary: '#7c5cff',
-        colorBgContainer: '#1c1c28',
-        colorBgElevated: '#1c1c28',
-        colorBorder: '#2e2e40',
-        colorText: '#e8e8f0',
-        colorTextSecondary: '#9a9ab0',
+        colorBgContainer: '#212121',
+        colorBgElevated: '#272727',
+        colorBorder: '#383838',
+        colorText: '#f1f1f1',
+        colorTextSecondary: '#aaaaaa',
         colorError: '#ff5c7a',
         colorSuccess: '#5ad19a',
         borderRadius: 12,
