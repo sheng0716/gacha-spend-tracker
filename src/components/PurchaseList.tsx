@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Button, Card, DatePicker, Select, Space, Table, Tag, type TableColumnsType } from 'antd'
+import { Button, Card, DatePicker, Input, Select, Space, Table, Tag, type TableColumnsType } from 'antd'
 import { DeleteOutlined, EditOutlined } from '@ant-design/icons'
 import dayjs, { type Dayjs } from 'dayjs'
 import type { Game, Purchase } from '../types'
@@ -19,6 +19,7 @@ interface Props {
 
 export default function PurchaseList({ purchases, games, onEdit, onDelete }: Props) {
   const logoByGame = useMemo(() => gameLogoMap(games), [games])
+  const [keyword, setKeyword] = useState<string>('')
   const [gameFilter, setGameFilter] = useState<string>('')
   const [currencyFilter, setCurrencyFilter] = useState<string>('')
   const [range, setRange] = useState<[Dayjs | null, Dayjs | null] | null>([
@@ -38,6 +39,8 @@ export default function PurchaseList({ purchases, games, onEdit, onDelete }: Pro
   const from = range?.[0] ? range[0].format('YYYY-MM-DD') : ''
   const to = range?.[1] ? range[1].format('YYYY-MM-DD') : ''
 
+  const kw = keyword.trim().toLowerCase()
+
   const rows = useMemo(
     () =>
       purchases.filter((p) => {
@@ -45,16 +48,34 @@ export default function PurchaseList({ purchases, games, onEdit, onDelete }: Pro
         if (currencyFilter && p.currency !== currencyFilter) return false
         if (from && p.order_date < from) return false
         if (to && p.order_date > to) return false
+        if (kw) {
+          // 全局关键词：把这行所有可读字段拼起来做一次模糊匹配（游戏/商品/备注/币种/金额/日期/状态）
+          const haystack = [
+            p.order_date,
+            p.game,
+            p.product_name,
+            p.note,
+            p.currency,
+            p.status,
+            p.cost,
+            p.myr,
+          ]
+            .filter((v) => v != null)
+            .join(' ')
+            .toLowerCase()
+          if (!haystack.includes(kw)) return false
+        }
         return true
       }),
-    [purchases, gameFilter, currencyFilter, from, to],
+    [purchases, gameFilter, currencyFilter, from, to, kw],
   )
 
   const filteredTotal = useMemo(() => rows.reduce((s, p) => s + Number(p.myr), 0), [rows])
 
-  const hasFilter = Boolean(gameFilter || currencyFilter || from || to)
+  const hasFilter = Boolean(kw || gameFilter || currencyFilter || from || to)
 
   function clearFilters() {
+    setKeyword('')
     setGameFilter('')
     setCurrencyFilter('')
     setRange(null)
@@ -135,6 +156,13 @@ export default function PurchaseList({ purchases, games, onEdit, onDelete }: Pro
       }
     >
       <Space wrap style={{ marginBottom: 12 }}>
+        <Input.Search
+          allowClear
+          placeholder="搜索记录…"
+          style={{ width: 200 }}
+          value={keyword}
+          onChange={(e) => setKeyword(e.target.value)}
+        />
         <Select
           style={{ minWidth: 150 }}
           value={gameFilter || undefined}

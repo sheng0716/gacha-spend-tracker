@@ -1,6 +1,6 @@
-import { useMemo, useState } from 'react'
-import { Alert, App as AntdApp, Button, Col, Layout, Modal, Row, Space, Spin } from 'antd'
-import { SettingOutlined } from '@ant-design/icons'
+import { lazy, Suspense, useMemo, useState } from 'react'
+import { Alert, App as AntdApp, Button, Col, FloatButton, Layout, Modal, Row, Space, Spin } from 'antd'
+import { SettingOutlined, VerticalAlignTopOutlined } from '@ant-design/icons'
 import { useNavigate } from 'react-router-dom'
 import type { Session } from '@supabase/supabase-js'
 import type { Game, Product, Purchase, PurchaseInput } from '../types'
@@ -11,10 +11,12 @@ import { formatAmount, formatMYR } from '../lib/currency'
 import { DEMO } from '../lib/demoMode'
 import PurchaseForm from '../components/PurchaseForm'
 import PurchaseList from '../components/PurchaseList'
-import Summary from '../components/Summary'
 import ThemeToggle from '../components/ThemeToggle'
 import GameAvatar from '../components/GameAvatar'
 import { gameLogoMap } from '../lib/games'
+
+// Summary 依赖 recharts（体积大），懒加载让首屏包不带图表库
+const Summary = lazy(() => import('../components/Summary'))
 
 interface Props {
   session: Session | null
@@ -123,6 +125,20 @@ export default function Dashboard({
     })
   }
 
+  function onExport() {
+    modal.confirm({
+      title: '导出 CSV？',
+      content: `将把当前 ${purchases.length} 笔记录导出成 CSV 文件下载到本地。`,
+      okText: '导出',
+      cancelText: '取消',
+      mask: { closable: true },
+      onOk: () => {
+        downloadCSV(purchases)
+        message.success('已导出 CSV')
+      },
+    })
+  }
+
   function onLogout() {
     modal.confirm({
       title: '退出登录？',
@@ -152,7 +168,7 @@ export default function Dashboard({
           {!DEMO && (
             <Button icon={<SettingOutlined />} title="游戏管理" onClick={() => navigate('/admin')} />
           )}
-          <Button onClick={() => downloadCSV(purchases)} disabled={!purchases.length}>
+          <Button onClick={onExport} disabled={!purchases.length}>
             导出 CSV
           </Button>
           {!DEMO && <Button onClick={onLogout}>退出</Button>}
@@ -176,7 +192,9 @@ export default function Dashboard({
             </Col>
 
             <Col xs={24} lg={8}>
-              <Summary purchases={purchases} games={games} />
+              <Suspense fallback={<div className="center" style={{ padding: 40 }}><Spin /></div>}>
+                <Summary purchases={purchases} games={games} />
+              </Suspense>
             </Col>
           </Row>
         </div>
@@ -208,6 +226,13 @@ export default function Dashboard({
           onCancel={requestCloseForm}
         />
       </Modal>
+
+      {/* 页面向下滚动一定距离后，右下角浮出「回到顶部」按钮，点击平滑滚回顶部 */}
+      <FloatButton.BackTop
+        visibilityHeight={300}
+        icon={<VerticalAlignTopOutlined />}
+        tooltip="回到顶部"
+      />
     </Layout>
   )
 }
