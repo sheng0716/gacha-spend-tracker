@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Button, Card, DatePicker, Input, Select, Space, Table, Tag, type TableColumnsType } from 'antd'
 import { DeleteOutlined, EditOutlined } from '@ant-design/icons'
 import dayjs, { type Dayjs } from 'dayjs'
@@ -71,6 +71,13 @@ export default function PurchaseList({ purchases, games, onEdit, onDelete }: Pro
   )
 
   const filteredTotal = useMemo(() => rows.reduce((s, p) => s + Number(p.myr), 0), [rows])
+
+  // 分页：筛选条件变化时回到第 1 页，避免停在一个筛完已不存在的页码上显示空白
+  const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(20)
+  useEffect(() => {
+    setPage(1)
+  }, [kw, gameFilter, currencyFilter, from, to])
 
   const hasFilter = Boolean(kw || gameFilter || currencyFilter || from || to)
 
@@ -215,7 +222,18 @@ export default function PurchaseList({ purchases, games, onEdit, onDelete }: Pro
         rowKey="id"
         columns={columns}
         dataSource={rows}
-        pagination={false}
+        pagination={{
+          current: page,
+          pageSize,
+          onChange: (p, ps) => {
+            setPage(p)
+            setPageSize(ps)
+          },
+          showSizeChanger: true,
+          pageSizeOptions: [20, 50, 100],
+          showTotal: (t) => `共 ${t} 笔`,
+          hideOnSinglePage: false,
+        }}
         size="middle"
         scroll={{ x: 'max-content' }}
         locale={{ emptyText: '暂无记录' }}
