@@ -4,7 +4,7 @@ import { SearchOutlined } from '@ant-design/icons'
 import type { UploadFile } from 'antd'
 import { DeleteOutlined, EditOutlined, PlusOutlined } from '@ant-design/icons'
 import type { Game, Product, Purchase } from '../types'
-import { createGame, deleteGame, updateGame, uploadGameLogo, deleteGameLogoIfUploaded } from '../lib/games'
+import { createGame, deleteGame, updateGame, uploadGameLogo, deleteGameLogoIfUploaded, resolveGameLogo } from '../lib/games'
 import { importGamesAndProductsFromPurchases } from '../lib/migrate'
 import GameAvatar from './GameAvatar'
 import ProductAdmin from './ProductAdmin'
@@ -65,8 +65,11 @@ export default function GameAdmin({ userId, games, products, purchases, onChange
   function openEdit(g: Game) {
     setEditing(g)
     setName(g.name)
+    // 预览地址要过 resolveGameLogo：http URL 原样、相对路径按 BASE_URL 重拼（否则子路径部署裂图）、
+    // logo_url 为空时按游戏名回退到静态图标（如 Star Savior）。直接用裸 g.logo_url 会 404。
+    const preview = resolveGameLogo(g.logo_url, g.name)
     setFileList(
-      g.logo_url ? [{ uid: g.logo_url, name: 'logo', status: 'done', url: g.logo_url }] : [],
+      preview ? [{ uid: 'current', name: 'logo', status: 'done', url: preview }] : [],
     )
     setShowForm(true)
   }
