@@ -68,7 +68,7 @@ export default function Auth() {
               { type: 'email', message: '邮箱格式不正确' },
             ]}
           >
-            <Input type="email" autoComplete="email" placeholder="you@example.com" />
+            <Input type="email" name="email" autoComplete="email" placeholder="you@example.com" />
           </Form.Item>
 
           <Form.Item
@@ -79,7 +79,7 @@ export default function Auth() {
               { min: 6, message: '密码至少 6 位' },
             ]}
           >
-            <Input.Password autoComplete={mode === 'signup' ? 'new-password' : 'current-password'} />
+            <Input.Password name="password" autoComplete={mode === 'signup' ? 'new-password' : 'current-password'} />
           </Form.Item>
 
           {err && <Alert type="error" showIcon message={err} style={{ marginBottom: 12 }} />}
