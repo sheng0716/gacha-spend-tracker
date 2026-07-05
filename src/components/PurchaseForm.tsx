@@ -14,7 +14,7 @@ import {
 } from 'antd'
 import dayjs from 'dayjs'
 import type { Game, Product, Purchase, PurchaseInput, RateSource } from '../types'
-import { CURRENCIES, BASE_CURRENCY, formatMYR } from '../lib/currency'
+import { CURRENCIES, BASE_CURRENCY, formatMYR, currencyPrecision } from '../lib/currency'
 import { getHistoricalRate } from '../lib/rates'
 import { createPurchase, updatePurchase } from '../lib/purchases'
 import { createProduct } from '../lib/products'
@@ -297,6 +297,7 @@ export default function PurchaseForm({
           <InputNumber
             style={{ width: '100%' }}
             min={0}
+            precision={currencyPrecision(currency)}
             value={cost === '' ? null : Number(cost)}
             onChange={(v) => {
               markTouched()

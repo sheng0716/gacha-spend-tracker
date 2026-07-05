@@ -31,6 +31,14 @@ export function currencySymbol(code: string): string {
   return SYMBOLS[code] ?? code
 }
 
+// 无小数位的货币（日元/韩元没有「分」这种子单位，800 就是 800，不存在 800.5）
+const ZERO_DECIMAL_CURRENCIES = new Set(['JPY', 'KRW'])
+
+// 某币种原币金额应保留的小数位：无小数货币为 0，其余 2 位
+export function currencyPrecision(code: string): number {
+  return ZERO_DECIMAL_CURRENCIES.has(code.toUpperCase()) ? 0 : 2
+}
+
 // 币种对应旗帜图标（本地打包，来自 flag-icons，不依赖联网）
 const FLAGS: Record<string, string> = {
   JPY: jpFlag,
@@ -50,7 +58,7 @@ export function currencyFlagUrl(code: string): string | undefined {
 
 // 原币金额展示，如 "¥800"、"NT$142"
 export function formatAmount(amount: number, currency: string): string {
-  const n = amount.toLocaleString('en-US', { maximumFractionDigits: 2 })
+  const n = amount.toLocaleString('en-US', { maximumFractionDigits: currencyPrecision(currency) })
   return `${currencySymbol(currency)}${n}`
 }
 
