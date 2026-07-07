@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Button, Card, DatePicker, Input, Select, Space, Table, Tag, type TableColumnsType } from 'antd'
-import { DeleteOutlined, EditOutlined } from '@ant-design/icons'
+import { ClearOutlined, DeleteOutlined, EditOutlined } from '@ant-design/icons'
 import dayjs, { type Dayjs } from 'dayjs'
 import type { Game, Purchase } from '../types'
 import { formatAmount, formatMYR } from '../lib/currency'
@@ -162,7 +162,8 @@ export default function PurchaseList({ purchases, games, onEdit, onDelete }: Pro
         </span>
       }
     >
-      <Space wrap style={{ marginBottom: 12 }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, marginBottom: 12 }}>
+        <Space wrap style={{ flex: 1 }}>
         <Input.Search
           allowClear
           placeholder="搜索记录…"
@@ -211,12 +212,16 @@ export default function PurchaseList({ purchases, games, onEdit, onDelete }: Pro
             },
           ]}
         />
-        {hasFilter && (
-          <Button type="link" onClick={clearFilters}>
-            清除筛选
-          </Button>
-        )}
-      </Space>
+        </Space>
+        {/* 始终占位（无筛选时隐藏但保留位置），避免按钮出现/消失时把左侧筛选控件挤得左右跳动 */}
+        <Button
+          icon={<ClearOutlined />}
+          onClick={clearFilters}
+          style={{ visibility: hasFilter ? 'visible' : 'hidden' }}
+        >
+          清除筛选
+        </Button>
+      </div>
 
       <Table
         rowKey="id"
