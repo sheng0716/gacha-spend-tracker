@@ -31,14 +31,17 @@ export function applyTheme(t: Theme): void {
 export function antdTokens(t: Theme) {
   return t === 'dark'
     ? {
-        colorPrimary: '#7c5cff',
-        colorBgContainer: '#212121',
-        colorBgElevated: '#272727',
-        colorBorder: '#383838',
-        colorText: '#f1f1f1',
-        colorTextSecondary: '#aaaaaa',
-        colorError: '#ff5c7a',
-        colorSuccess: '#5ad19a',
+        // Google Material 暗色配色（与 index.css 的 dark vars 对应）
+        colorPrimary: '#8ab4f8',
+        // Google 的浅蓝按钮用深色文字（白字在浅蓝上对比度不足）
+        colorTextLightSolid: '#202124',
+        colorBgContainer: '#292a2d',
+        colorBgElevated: '#35363a',
+        colorBorder: '#3c4043',
+        colorText: '#e8eaed',
+        colorTextSecondary: '#9aa0a6',
+        colorError: '#f28b82',
+        colorSuccess: '#81c995',
         borderRadius: 12,
       }
     : {
