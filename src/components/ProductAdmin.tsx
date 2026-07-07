@@ -11,7 +11,7 @@ import {
   type TableColumnsType,
 } from 'antd'
 import { DeleteOutlined, EditOutlined } from '@ant-design/icons'
-import type { Product } from '../types'
+import type { Product, ProductInput } from '../types'
 import { CURRENCIES, formatAmount } from '../lib/currency'
 import { createProduct, deleteProduct, updateProduct } from '../lib/products'
 import { useComboFilter } from '../hooks/useComboFilter'
@@ -54,15 +54,9 @@ export default function ProductAdmin({ gameId, products, onChanged }: Props) {
     setShowForm(true)
   }
 
-  async function submit() {
-    const priceNum = parseFloat(price)
-    if (!name.trim() || isNaN(priceNum) || priceNum <= 0) {
-      message.error('请填写商品名称和有效价格。')
-      return
-    }
+  async function persist(input: ProductInput) {
     setSaving(true)
     try {
-      const input = { game_id: gameId, name: name.trim(), currency: currency.toUpperCase(), price: priceNum }
       if (editing) await updateProduct(editing.id, input)
       else await createProduct(input)
       setShowForm(false)
@@ -72,6 +66,53 @@ export default function ProductAdmin({ gameId, products, onChanged }: Props) {
     } finally {
       setSaving(false)
     }
+  }
+
+  function submit() {
+    const priceNum = parseFloat(price)
+    if (!name.trim() || isNaN(priceNum) || priceNum <= 0) {
+      message.error('请填写商品名称和有效价格。')
+      return
+    }
+    const input = { game_id: gameId, name: name.trim(), currency: currency.toUpperCase(), price: priceNum }
+    // 编辑时若资料真的变了，先弹确认再覆盖旧记录，防手滑；没变化或新增则直接写入
+    const changed =
+      editing != null &&
+      (input.name !== editing.name || input.currency !== editing.currency || input.price !== editing.price)
+    if (changed) {
+      const rows: { label: string; from: string; to: string }[] = []
+      if (input.name !== editing!.name) rows.push({ label: '名称', from: editing!.name, to: input.name })
+      if (input.currency !== editing!.currency)
+        rows.push({ label: '币种', from: editing!.currency, to: input.currency })
+      if (input.price !== editing!.price)
+        rows.push({
+          label: '价格',
+          from: formatAmount(editing!.price, editing!.currency),
+          to: formatAmount(input.price, input.currency),
+        })
+      modal.confirm({
+        title: '用新资料替换旧的？',
+        content: (
+          <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '4px 12px', marginTop: 8 }}>
+            {rows.map((r) => (
+              <div key={r.label} style={{ display: 'contents' }}>
+                <span className="muted">{r.label}</span>
+                <span>
+                  <span style={{ textDecoration: 'line-through', opacity: 0.6 }}>{r.from}</span>
+                  {' → '}
+                  <strong>{r.to}</strong>
+                </span>
+              </div>
+            ))}
+          </div>
+        ),
+        okText: '替换',
+        cancelText: '取消',
+        onOk: () => persist(input),
+      })
+      return
+    }
+    void persist(input)
   }
 
   function onDelete(p: Product) {
@@ -174,7 +215,7 @@ export default function ProductAdmin({ gameId, products, onChanged }: Props) {
           </div>
         </Form>
       ) : (
-        <Button type="link" onClick={openNew} style={{ paddingLeft: 0, marginBottom: 8 }}>
+        <Button type="primary" onClick={openNew} style={{ marginBottom: 8 }}>
           ＋ 新增商品
         </Button>
       )}
