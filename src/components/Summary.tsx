@@ -14,7 +14,6 @@ import {
   XAxis,
   YAxis,
   Tooltip,
-  Legend,
   ResponsiveContainer,
   PieChart,
   Pie,
@@ -23,6 +22,7 @@ import {
 import type { Game, Purchase } from '../types'
 import { formatMYR } from '../lib/currency'
 import { gameColor, gameInitial, resolveGameLogo, gameLogoMap } from '../lib/games'
+import GameAvatar from './GameAvatar'
 
 const COLORS = ['#7c5cff', '#ff7ab6', '#39c0ed', '#ffc14d', '#5ad19a', '#ff8a65', '#a78bfa']
 
@@ -127,6 +127,62 @@ function renderStackedGameBar(name: string, monthTotals: Map<string, number>, ro
   }
 }
 
+// 按月柱状图的自定义 tooltip：每个游戏一行「头像 + 名称 + 金额」，按金额降序，末尾加当月总计。
+// 传 logoByGame 是为了跟饼图/头像一致地解析 logo（静态图标要过 resolveGameLogo，这里交给 GameAvatar 内部处理）。
+function MonthTooltip(props: {
+  active?: boolean
+  label?: string | number
+  payload?: { name?: string | number; value?: number; color?: string }[]
+  logoByGame: Map<string, string | null>
+}) {
+  const { active, label, payload = [], logoByGame } = props
+  if (!active || payload.length === 0) return null
+  const rows = payload
+    .map((p) => ({ name: String(p.name ?? ''), value: Number(p.value) || 0 }))
+    .filter((r) => r.value > 0)
+    .sort((a, b) => b.value - a.value)
+  if (rows.length === 0) return null
+  const total = rows.reduce((s, r) => s + r.value, 0)
+  return (
+    <div
+      style={{
+        background: 'var(--panel)',
+        border: '1px solid var(--border)',
+        borderRadius: 8,
+        color: 'var(--text)',
+        padding: '8px 10px',
+        fontSize: 12,
+        minWidth: 160,
+      }}
+    >
+      <div className="muted" style={{ marginBottom: 6 }}>{String(label)}</div>
+      {rows.map((r) => (
+        <div key={r.name} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+          <GameAvatar game={r.name} logoUrl={logoByGame.get(r.name) ?? null} size={18} />
+          <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            {r.name}
+          </span>
+          <span style={{ fontVariantNumeric: 'tabular-nums' }}>{formatMYR(r.value)}</span>
+        </div>
+      ))}
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          gap: 8,
+          marginTop: 6,
+          paddingTop: 6,
+          borderTop: '1px solid var(--border)',
+          fontWeight: 600,
+        }}
+      >
+        <span>合计</span>
+        <span style={{ fontVariantNumeric: 'tabular-nums' }}>{formatMYR(total)}</span>
+      </div>
+    </div>
+  )
+}
+
 export default function Summary({ purchases, games }: Props) {
   const logoByGame = useMemo(() => gameLogoMap(games), [games])
   const total = useMemo(() => purchases.reduce((s, p) => s + Number(p.myr), 0), [purchases])
@@ -168,7 +224,7 @@ export default function Summary({ purchases, games }: Props) {
       month,
       ...Object.fromEntries(Object.entries(games).map(([g, v]) => [g, Number(v.toFixed(2))])),
     }) as Record<string, number | string>).sort((a, b) =>
-      String(a.month).localeCompare(String(b.month)),
+      String(b.month).localeCompare(String(a.month)),
     )
   }, [purchases])
 
@@ -182,6 +238,11 @@ export default function Summary({ purchases, games }: Props) {
     }
     return m
   }, [byMonth, gameNames])
+
+  // 月份多了就横向滚动：每个月给固定像素宽，图表整体宽度按月份数算（但不小于容器宽度），
+  // 外层 div 负责横向滚动条。byMonth 按月份降序排，最新月在最左，滚动条默认停在最左即可。
+  const PX_PER_MONTH = 88
+  const monthChartWidth = Math.max(byMonth.length * PX_PER_MONTH, 320)
 
   return (
     <div className="summary">
@@ -237,32 +298,29 @@ export default function Summary({ purchases, games }: Props) {
         <Row gutter={[16, 16]} style={{ marginTop: 16 }}>
           <Col span={24}>
             <Card title="按月花费 (MYR)">
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={byMonth} margin={{ top: 8, right: 8, left: -12, bottom: 0 }}>
-                  <XAxis dataKey="month" tick={{ fontSize: 11, fill: 'var(--muted)' }} />
-                  <YAxis tick={{ fontSize: 11, fill: 'var(--muted)' }} />
-                  <Tooltip
-                    cursor={{ fill: 'var(--panel-2)' }}
-                    formatter={(v) => formatMYR(Number(v))}
-                    contentStyle={{
-                      background: 'var(--panel)',
-                      border: '1px solid var(--border)',
-                      borderRadius: 8,
-                      color: 'var(--text)',
-                    }}
-                  />
-                  <Legend wrapperStyle={{ fontSize: 12 }} />
-                  {gameNames.map((name, i) => (
-                    <Bar
-                      key={name}
-                      dataKey={name}
-                      stackId="month"
-                      fill={gameColor(name)}
-                      shape={renderStackedGameBar(name, monthTotals, i === gameNames.length - 1)}
-                    />
-                  ))}
-                </BarChart>
-              </ResponsiveContainer>
+              <div style={{ overflowX: 'auto', overflowY: 'hidden' }}>
+                <div style={{ width: monthChartWidth, minWidth: '100%', height: 300 }}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={byMonth} margin={{ top: 8, right: 8, left: -12, bottom: 0 }}>
+                      <XAxis dataKey="month" tick={{ fontSize: 11, fill: 'var(--muted)' }} />
+                      <YAxis tick={{ fontSize: 11, fill: 'var(--muted)' }} />
+                      <Tooltip
+                        cursor={{ fill: 'var(--panel-2)' }}
+                        content={<MonthTooltip logoByGame={logoByGame} />}
+                      />
+                      {gameNames.map((name, i) => (
+                        <Bar
+                          key={name}
+                          dataKey={name}
+                          stackId="month"
+                          fill={gameColor(name)}
+                          shape={renderStackedGameBar(name, monthTotals, i === gameNames.length - 1)}
+                        />
+                      ))}
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
             </Card>
           </Col>
 
